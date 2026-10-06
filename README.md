@@ -22,9 +22,10 @@ irm https://raw.githubusercontent.com/scanady/family-cookbook/main/install.ps1 |
 ```
 
 It asks where to put the book (`our-cookbook` in your user folder unless you
-say otherwise), installs Python if you have none, the engine, the browser it
-lays out pages with (about 700 MB), and Ghostscript for the print files
-(Windows asks your permission once), then starts the book.
+say otherwise). It installs Python if you have none, the engine, the browser it
+lays out pages with (about 700 MB), and poppler for reading PDFs. It also opens
+Ghostscript's installer for the print files: allow it and click through with
+the default settings. Then it starts the book.
 
 **macOS or Linux.** In a terminal, with Python 3.11 or newer:
 
