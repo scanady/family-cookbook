@@ -82,27 +82,26 @@ Say 'Installing Chromium, the browser that lays out the pages (about 700 MB, onc
 Invoke-Checked $venvPython @('-m', 'playwright', 'install', 'chromium')
 
 if (-not (Find-Ghostscript)) {
-    Say 'Installing Ghostscript, which makes the print files (Windows asks for permission)'
+    Say 'Installing Ghostscript, which makes the print files'
+    Write-Host 'Windows asks for permission, then the Ghostscript installer opens: click Next, I Agree,'
+    Write-Host 'Install, and Finish, keeping its settings. (Ghostscript has no unattended install.)'
     try {
         $release = Invoke-RestMethod 'https://api.github.com/repos/ArtifexSoftware/ghostpdl-downloads/releases/latest'
         $asset = $release.assets | Where-Object { $_.name -match '^gs\d+w64\.exe$' } | Select-Object -First 1
         $setup = Join-Path $env:TEMP $asset.name
         Invoke-WebRequest $asset.browser_download_url -OutFile $setup
-        # Ask Windows for permission only when this window does not already
-        # have it; where no one can answer the prompt, the request would wait forever.
         $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
             [Security.Principal.WindowsBuiltInRole]::Administrator)
-        $start = @{ FilePath = $setup; ArgumentList = '/S'; PassThru = $true }
-        if (-not $admin) { $start.Verb = 'RunAs' }
+        $start = @{ FilePath = $setup; PassThru = $true }
+        if (-not $admin) { $start.Verb = 'RunAs' }   # the permission prompt
         $setupProcess = Start-Process @start
-        if (-not $setupProcess.WaitForExit(300000)) {
-            $setupProcess.Kill()
-            throw 'the Ghostscript installer did not finish within 5 minutes'
+        if (-not $setupProcess.WaitForExit(1800000)) {
+            throw 'the Ghostscript installer was still open after 30 minutes'
         }
         Remove-Item $setup -ErrorAction SilentlyContinue
-        if (-not (Find-Ghostscript)) { throw "the Ghostscript installer ended (exit $($setupProcess.ExitCode)) without installing it" }
+        if (-not (Find-Ghostscript)) { throw 'the Ghostscript installer closed without installing it' }
     } catch {
-        Write-Warning "Ghostscript was not installed ($($_.Exception.Message)). The book still builds; to print it, install Ghostscript from https://ghostscript.com/releases/gsdnld.html"
+        Write-Warning "Ghostscript was not installed ($($_.Exception.Message)). The book still builds; to print it, run this installer again or install Ghostscript from https://ghostscript.com/releases/gsdnld.html"
     }
 }
 

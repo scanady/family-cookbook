@@ -116,8 +116,15 @@ jobs:
         with:
           python-version: "3.12"
 
+      # Ghostscript's installer has no unattended mode, so a person clicks
+      # through it; here Chocolatey installs it, and install.ps1 finds it under
+      # Program Files and skips that step.
+      - name: Install Ghostscript
+        shell: powershell
+        run: choco install ghostscript -y --no-progress
+
       # Windows PowerShell 5.1, the one every Windows has, running the script the
-      # way `irm ... | iex` does: defaults, no key, Ghostscript from its installer.
+      # way `irm ... | iex` does: defaults, no key.
       - name: install.ps1 sets up a book that is ready to print
         shell: powershell
         env:
