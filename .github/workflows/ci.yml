@@ -105,3 +105,69 @@ jobs:
           ./cookbook doctor
           test -f book/book.yaml
           git init -q && git check-ignore -q .env
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      # Windows PowerShell 5.1, the one every Windows has, running the script the
+      # way `irm ... | iex` does: defaults, no key, Ghostscript from its installer.
+      - name: install.ps1 sets up a book that is ready to print
+        shell: powershell
+        env:
+          COOKBOOK_PACKAGE: ${{ github.workspace }}
+          COOKBOOK_DIR: ${{ runner.temp }}\installed-book
+          COOKBOOK_ASSUME_DEFAULTS: "1"
+        run: |
+          Get-Content install.ps1 -Raw | Invoke-Expression
+          Set-Location $env:COOKBOOK_DIR
+          ./cookbook doctor   # as the README writes it
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (-not (Test-Path book\book.yaml)) { exit 1 }
+
+      - name: Tests
+        shell: powershell
+        run: |
+          python -m pip install --quiet -e ".[test]"
+          python -m playwright install chromium
+          python -m pytest
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: The installed book prints
+        shell: powershell
+        run: |
+          Set-Location "$env:RUNNER_TEMP\installed-book"
+          function Write-Utf8($path, $text) {
+            New-Item -ItemType Directory -Force -Path (Split-Path $path) | Out-Null
+            [System.IO.File]::WriteAllText((Join-Path $PWD $path), $text)
+          }
+          Write-Utf8 book\recipes\mains\skillet-cornbread\recipe.md "# Skillet Cornbread`n`n*Ruth Baker*`n`n## Ingredients`n`n- 1 cup cornmeal`n- 1 cup flour`n- 1 cup buttermilk`n- 1 egg`n- 2 tablespoons butter`n`n## Directions`n`n1. Heat the oven to 425 degrees with the butter in a cast-iron skillet.`n2. Stir the rest together and pour it into the hot skillet.`n3. Bake until golden, about 20 minutes.`n"
+          Write-Utf8 book\recipes\desserts\baked-apples\recipe.md "# Baked Apples`n`n*Tom Baker*`n`n## Ingredients`n`n- 4 apples, cored`n- 1/4 cup brown sugar`n- 1 teaspoon cinnamon`n`n## Directions`n`n1. Fill the apples with the sugar and cinnamon.`n2. Bake at 350 degrees until tender, about 40 minutes.`n"
+          Write-Utf8 book\sections\matter-dedication\page.md "*For everyone who ever asked for the recipe.*`n"
+          Write-Utf8 book\sections\matter-closing-message\page.md "*Add your own on the blank pages.*`n"
+          foreach ($chapter in 'breakfast', 'mains', 'sides', 'desserts') {
+            Write-Utf8 "book\sections\$chapter\page.md" "*From the Baker kitchen.*`n"
+          }
+          Write-Utf8 book\cover.md "# Back Cover`n`nTwo recipes from the Baker kitchen.`n`n*The Bakers*`n"
+          $yaml = Get-Content book\book.yaml -Raw
+          [System.IO.File]::WriteAllText((Join-Path $PWD book\book.yaml), $yaml.Replace('TODO: the family name', 'The Bakers'))
+          .\cookbook.cmd lint
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          .\cookbook.cmd press
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (-not ((Test-Path draft\cookbook-interior-press.pdf) -and (Test-Path draft\cookbook-cover.pdf))) { exit 1 }
+
+      # What `cookbook doctor` tells a Windows user to run for poppler: does it
+      # put pdftoppm where the engine looks?
+      - name: Poppler from winget
+        continue-on-error: true
+        shell: powershell
+        run: |
+          winget install -e --id oschwartz10612.Poppler --accept-package-agreements --accept-source-agreements --disable-interactivity
+          Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Links" -ErrorAction SilentlyContinue | Select-Object Name
+          [Environment]::GetEnvironmentVariable('Path', 'User')

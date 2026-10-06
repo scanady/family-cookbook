@@ -1,8 +1,8 @@
 # Commands
 
 Everything the `cookbook` command does, for when the [README](../README.md)'s
-five commands are not enough. If you installed with `install.sh`, run each one as
-`./cookbook` from the book's folder.
+five commands are not enough. If you installed with `install.ps1` or
+`install.sh`, run each one as `./cookbook` from the book's folder.
 
 Run any command from the book's folder or a folder inside it, or pass
 `--book PATH`. `cookbook COMMAND -h` lists a command's options.
@@ -105,13 +105,13 @@ our-cookbook/
     sources/ai-log.jsonl               AI tokens and cost per recipe (ingest, photo)
     sources/review-log.jsonl           review approvals and time per recipe
   draft/                               everything the commands make; not committed
-  cookbook                             the launcher install.sh writes
+  cookbook, cookbook.cmd               the launcher install.sh (macOS, Linux) or install.ps1 (Windows) writes
   .venv/                               the engine, installed; not committed
   index.md                             written by cookbook index
   .env                                 your AI key; not committed
   .gitignore
   .agents/skills/                      guides for AI coding assistants (cookbook agent-files)
-  .claude/skills, .github/skills       links to .agents/skills
+  .claude/skills, .github/skills       links to .agents/skills (copies on Windows)
   .github/instructions/                the recipe and page format rules, for AI coding assistants
 ```
 
@@ -125,27 +125,51 @@ the generated files and your key.
 
 ## Install by hand
 
-`install.sh` runs these steps. To run them yourself, you need Python 3.11 or
-newer and Ghostscript (`sudo apt install ghostscript` or
-`brew install ghostscript`):
+The installers run these steps. To run them yourself, you need Python 3.11 or
+newer and Ghostscript: `sudo apt install ghostscript`, `brew install
+ghostscript`, or on Windows the installer from
+[ghostscript.com](https://ghostscript.com/releases/gsdnld.html).
+
+macOS or Linux:
 
 ```bash
 mkdir our-cookbook && cd our-cookbook
 python3 -m venv .venv
 . .venv/bin/activate
-pip install "git+https://github.com/scanady/family-cookbook@v1.2.1"
+pip install "family-cookbook @ https://github.com/scanady/family-cookbook/archive/refs/tags/v1.3.0.zip"
 python -m playwright install chromium
 cookbook init --title "Our Family Cookbook" --subtitle "The Smith Family"
 cookbook doctor
 ```
 
-Run `. .venv/bin/activate` again in each new terminal before using `cookbook`.
-To read recipes from PDF files, also install poppler (`sudo apt install
-poppler-utils` or `brew install poppler`).
+Windows, in PowerShell:
+
+```powershell
+mkdir our-cookbook; cd our-cookbook
+py -3 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install "family-cookbook @ https://github.com/scanady/family-cookbook/archive/refs/tags/v1.3.0.zip"
+python -m playwright install chromium
+cookbook init --title "Our Family Cookbook" --subtitle "The Smith Family"
+cookbook doctor
+```
+
+Activate the virtual environment again in each new terminal before using
+`cookbook`. If PowerShell refuses to run `Activate.ps1`, run
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once. To read recipes from
+PDF files, also install poppler: `sudo apt install poppler-utils`, `brew install
+poppler`, or `winget install -e --id oschwartz10612.Poppler`.
 
 ## Upgrade
 
-Run `install.sh` again in the book's folder, with the new version:
+Run the installer again on the book's folder. Windows, in PowerShell (give it
+the same folder when it asks):
+
+```powershell
+irm https://raw.githubusercontent.com/scanady/family-cookbook/main/install.ps1 | iex
+```
+
+macOS or Linux, in the book's folder:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/scanady/family-cookbook/main/install.sh | bash -s -- .

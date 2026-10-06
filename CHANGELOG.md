@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.3.0
+
+Windows is supported, and its installer is the one the README shows first.
+
+- **`install.ps1`**, run from PowerShell with
+  `irm https://raw.githubusercontent.com/scanady/family-cookbook/main/install.ps1 | iex`:
+  installs Python if there is none (through winget), the engine, Chromium, and
+  Ghostscript (its own installer, one permission prompt), starts the book, asks
+  for the AI service and key, and writes a `cookbook.cmd` launcher, so
+  `./cookbook studio` works in PowerShell as it does in a macOS or Linux
+  terminal. CI runs it under Windows PowerShell 5.1 and prints a new book.
+- **The engine on Windows.** Ghostscript is found as `gswin64c`, on PATH or
+  under Program Files, where its installer leaves it. Output to the console
+  and from poppler is read and written as UTF-8. `.claude/skills` and
+  `.github/skills` become copies of `.agents/skills` where Windows refuses
+  links. `.env` may start with a byte-order mark. `cookbook doctor` gives the
+  Windows command for each fix.
+- Both installers install the release's source archive, so git is no longer
+  needed.
+
 ## 1.2.1
 
 - `install.sh` asks which AI service to use, OpenRouter (recommended), Google

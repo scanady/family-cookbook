@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "family-cookbook"
-version = "1.2.1"
+version = "1.3.0"
 description = "Build a printed, press-ready family cookbook from markdown recipes."
 readme = "README.md"
 license = "PolyForm-Noncommercial-1.0.0 AND OFL-1.1"
@@ -17,6 +17,7 @@ classifiers = [
     "Environment :: Console",
     "Operating System :: POSIX :: Linux",
     "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",

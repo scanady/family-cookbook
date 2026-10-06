@@ -362,5 +362,10 @@ def parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The messages use “quotes”, dashes, and fractions. A Windows console or a
+    # redirected stream may default to a code page that has none of them.
+    for stream in (sys.stdout, sys.stderr):
+        if (stream.encoding or "").lower().replace("-", "") != "utf8":
+            stream.reconfigure(encoding="utf-8", errors="replace")
     args = parser().parse_args(argv)
     return args.handler(args)

@@ -17,8 +17,11 @@ fit pass that shrinks any overflowing page.
 from __future__ import annotations
 
 import base64
+import os
+import re
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 from playwright.sync_api import Error as PlaywrightError
@@ -59,11 +62,28 @@ def _report(root: BookRoot, pdf: Path) -> None:
     print(f"Wrote {pdf.relative_to(root.path)}  ({pdf.stat().st_size / 1_048_576:.1f} MB)")
 
 
+def find_ghostscript() -> str | None:
+    """Ghostscript's command-line program: gs, or gswin64c on Windows. Its
+    Windows installer leaves PATH alone, so there the newest install under
+    Program Files\\gs counts too."""
+    found = shutil.which("gs") or shutil.which("gswin64c")
+    if found or sys.platform != "win32":
+        return found
+    installs = Path(os.environ.get("ProgramFiles", r"C:\Program Files")).glob("gs/gs*/bin/gswin64c.exe")
+    newest = max(installs, key=lambda p: [int(n) for n in re.findall(r"\d+", p.parent.parent.name)], default=None)
+    return str(newest) if newest else None
+
+
+GHOSTSCRIPT_INSTALL = ("download and run the Ghostscript installer from https://ghostscript.com/releases/gsdnld.html"
+                       if sys.platform == "win32" else
+                       "brew install ghostscript" if sys.platform == "darwin" else "sudo apt install ghostscript")
+
+
 def _ghostscript() -> str:
-    gs = shutil.which("gs") or shutil.which("gswin64c")
+    gs = find_ghostscript()
     if not gs:
-        raise SystemExit("Ghostscript (gs) is not installed — it compresses the interior for "
-                         "press; install it (e.g. apt install ghostscript, brew install ghostscript)")
+        raise SystemExit(f"Ghostscript is not installed — it compresses the interior for press; "
+                         f"{GHOSTSCRIPT_INSTALL}")
     return gs
 
 
@@ -112,7 +132,8 @@ def export_interior(root: BookRoot) -> None:
     _print_to_pdf(html, raw)
     _report(root, raw)
     press.unlink(missing_ok=True)
-    proc = subprocess.run([gs, *GS_PRESS, "-o", str(press), str(raw)], capture_output=True, text=True)
+    proc = subprocess.run([gs, *GS_PRESS, "-o", str(press), str(raw)], capture_output=True,
+                          encoding="utf-8", errors="replace")
     if proc.returncode != 0 or not press.exists():
         raise SystemExit(f"Ghostscript failed (exit {proc.returncode}).\n{proc.stdout}{proc.stderr}")
     _report(root, press)

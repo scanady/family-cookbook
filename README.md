@@ -15,23 +15,36 @@ recipes from the 1896 Boston Cooking-School Cook Book.*
 
 ## Install
 
-On Linux or macOS with Python 3.11 or newer:
+**Windows.** Open PowerShell (Start menu, type *PowerShell*) and paste:
+
+```powershell
+irm https://raw.githubusercontent.com/scanady/family-cookbook/main/install.ps1 | iex
+```
+
+It asks where to put the book (`our-cookbook` in your user folder unless you
+say otherwise), installs Python if you have none, the engine, the browser it
+lays out pages with (about 700 MB), and Ghostscript for the print files
+(Windows asks your permission once), then starts the book.
+
+**macOS or Linux.** In a terminal, with Python 3.11 or newer:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/scanady/family-cookbook/main/install.sh | bash -s -- our-cookbook
 ```
 
-This makes the folder `our-cookbook`, installs the engine and the browser it
-lays out pages with (about 700 MB), and starts the book. It then asks which AI
-service to use, OpenRouter (recommended) or Google AI Studio, and for its key.
-Skip it and everything still works, and the typing is yours. It ends with
-`cookbook doctor`, which names anything missing and the command that installs
-it. Printing also needs Ghostscript
-(`sudo apt install ghostscript` or `brew install ghostscript`).
+It makes the folder `our-cookbook`, installs the engine and the browser, and
+starts the book. Install Ghostscript yourself for the print files:
+`brew install ghostscript` or `sudo apt install ghostscript`.
+
+Either way, it then asks which AI service to use, OpenRouter (recommended) or
+Google AI Studio, and for its key. Skip it and everything still works, and the
+typing is yours. It ends with `cookbook doctor`, which names anything missing
+and the command that installs it.
 
 ## Make the book
 
-From the book's folder (`cd our-cookbook`):
+Run these from the book's folder (`cd our-cookbook`). The `./cookbook` commands
+work as written in PowerShell and in a macOS or Linux terminal.
 
 1. **Add recipes.** Give `ingest` a photo or scan of each card, both sides in
    order, or a PDF:

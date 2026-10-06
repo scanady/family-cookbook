@@ -457,7 +457,8 @@ class Studio:
             return {"files": None}
         pages = None
         if shutil.which("pdfinfo"):
-            out = subprocess.run(["pdfinfo", str(interior)], capture_output=True, text=True).stdout
+            out = subprocess.run(["pdfinfo", str(interior)], capture_output=True, encoding="utf-8",
+                                 errors="replace").stdout
             pages = next((int(line.split(":")[1]) for line in out.splitlines() if line.startswith("Pages:")), None)
         return {"files": {"pages": pages, "interior_bytes": interior.stat().st_size,
                           "cover_bytes": cover.stat().st_size}}

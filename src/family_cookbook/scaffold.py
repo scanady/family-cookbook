@@ -159,7 +159,8 @@ def install_agent_files(root: Path, update: bool) -> None:
     into .github/instructions/. Without `update`, anything already present is left
     alone; with it, each engine skill folder and instruction file is replaced.
     .claude/skills and .github/skills link to .agents/skills so every agent
-    finds the same copies."""
+    finds the same copies. Where links are not allowed (Windows outside
+    Developer Mode), they are copies instead, refreshed by `update`."""
     with resources.as_file(AGENT_FILES) as src:
         pairs = [(p, root / ".agents" / "skills" / p.name)
                  for p in sorted((src / "skills").iterdir()) if p.is_dir()]
@@ -180,11 +181,23 @@ def install_agent_files(root: Path, update: bool) -> None:
                 shutil.copyfile(source, dest)
             installed.append(rel)
 
+    skills = root / ".agents" / "skills"
     for link in (root / ".claude" / "skills", root / ".github" / "skills"):
-        if not link.is_symlink() and not link.exists():
+        rel = link.relative_to(root).as_posix()
+        if link.is_symlink() or (link.exists() and not update):
+            continue
+        if not link.exists():
             link.parent.mkdir(parents=True, exist_ok=True)
-            link.symlink_to(Path("..") / ".agents" / "skills", target_is_directory=True)
-            installed.append(f"{link.relative_to(root).as_posix()} -> ../.agents/skills")
+            try:
+                link.symlink_to(Path("..") / ".agents" / "skills", target_is_directory=True)
+                installed.append(f"{rel} -> ../.agents/skills")
+                continue
+            except OSError:
+                pass
+        # A copy, merged into any folder already there, so skills of the
+        # family's own beside it survive an update.
+        shutil.copytree(skills, link, dirs_exist_ok=True)
+        installed.append(f"{rel} (a copy of .agents/skills)")
 
     print(f"agent files installed: {len(installed)}")
     for rel in installed:

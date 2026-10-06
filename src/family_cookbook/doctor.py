@@ -11,10 +11,17 @@ import shutil
 import sys
 
 from . import __version__, config, models
+from .export import GHOSTSCRIPT_INSTALL, find_ghostscript
+from .ingest import POPPLER_INSTALL
 
 
-def _install(apt: str, brew: str) -> str:
-    return f"brew install {brew}" if sys.platform == "darwin" else f"sudo apt install {apt}"
+def _chromium_install() -> str:
+    # --with-deps adds Chromium's system libraries, which only Linux needs.
+    command = "-m playwright install" + (" --with-deps" if sys.platform.startswith("linux") else "") + " chromium"
+    if " " not in sys.executable:
+        return f"{sys.executable} {command}"
+    # PowerShell runs a quoted path only after &.
+    return f'& "{sys.executable}" {command}' if sys.platform == "win32" else f'"{sys.executable}" {command}'
 
 
 def chromium_problem() -> str | None:
@@ -35,11 +42,10 @@ def main(root: config.BookRoot | None) -> int:
     # (ok, required, what it is, the fix)
     checks = [
         (chromium is None, True, "Chromium, which lays out the pages" + (f" ({chromium})" if chromium else ""),
-         f"{sys.executable} -m playwright install --with-deps chromium"),
-        (bool(shutil.which("gs")), True, "Ghostscript, which makes the print files",
-         _install("ghostscript", "ghostscript")),
+         _chromium_install()),
+        (bool(find_ghostscript()), True, "Ghostscript, which makes the print files", GHOSTSCRIPT_INSTALL),
         (bool(shutil.which("pdftoppm")), False, "poppler, which reads PDF files for cookbook ingest",
-         _install("poppler-utils", "poppler")),
+         POPPLER_INSTALL),
         (bool(ai), False, f"AI, through {ai}" if ai else "AI: no key (without one, ingest and photo work by hand)",
          "paste an OpenRouter key (https://openrouter.ai/keys) after OPENROUTER_API_KEY=, or a Gemini key "
          "(https://aistudio.google.com/apikey) after GEMINI_API_KEY=, in the book's .env"),

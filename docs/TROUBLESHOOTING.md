@@ -1,6 +1,6 @@
 # Troubleshooting
 
-Start with `cookbook doctor` (`./cookbook doctor` if you used `install.sh`): it
+Start with `cookbook doctor` (`./cookbook doctor` if you used an installer): it
 checks Chromium, Ghostscript, poppler, the AI key, and the book folder, and
 prints the command that fixes each one missing.
 
@@ -8,9 +8,17 @@ prints the command that fixes each one missing.
 the fix `cookbook doctor` prints. On Linux it installs the system libraries
 Chromium needs too, and asks for your password.
 
-**`gs` or `pdftoppm` not found.** Install Ghostscript (for `cookbook press`) or
-poppler (for `cookbook ingest` on PDFs): `sudo apt install ghostscript
-poppler-utils` or `brew install ghostscript poppler`.
+**Ghostscript or `pdftoppm` not found.** Install Ghostscript (for
+`cookbook press`) or poppler (for `cookbook ingest` on PDFs): `sudo apt install
+ghostscript poppler-utils` or `brew install ghostscript poppler`. On Windows,
+run `install.ps1` again for Ghostscript (or use the installer from
+[ghostscript.com](https://ghostscript.com/releases/gsdnld.html)), and
+`winget install -e --id oschwartz10612.Poppler` for poppler.
+
+**Windows: `running scripts is disabled on this system`.** This shows up when
+running a downloaded `.ps1` file. Use the `irm … | iex` line from the README
+instead, which PowerShell allows, or run
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once.
 
 **`AI is off: no AI key`.** Paste a Gemini key from
 [Google AI Studio](https://aistudio.google.com/apikey) after `GEMINI_API_KEY=`,
@@ -58,9 +66,10 @@ margin at the binding than the engine's 0.75 inch. Open an
 [issue](https://github.com/scanady/family-cookbook/issues) with your page count
 before printing a book that long.
 
-**`cookbook agent-files` fails on Windows.** It creates symbolic links, which
-Windows only allows with Developer Mode turned on (Settings → System → For
-developers) or from an administrator prompt.
+**`.claude/skills` and `.github/skills` are folders, not links, on Windows.**
+Windows allows symbolic links only in Developer Mode, so the engine copies
+`.agents/skills` there instead; `cookbook agent-files --update` refreshes the
+copies.
 
 ## Glossary
 

@@ -42,6 +42,9 @@ from . import config, models
 IMAGE_TYPES = {".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"}
 PDF_DPI = 200      # a PDF page rasterized for reading: small type stays legible
 WINDOW = 6         # pages per transcription call
+# The command that installs poppler (pdftoppm, pdftotext, pdfimages, pdfinfo).
+POPPLER_INSTALL = ("winget install -e --id oschwartz10612.Poppler" if sys.platform == "win32" else
+                   "brew install poppler" if sys.platform == "darwin" else "sudo apt install poppler-utils")
 # Word's Symbol and Wingdings fonts put their characters in the private-use
 # block, U+F020-U+F0FF, at U+F000 plus the Latin-1 code (U+F0B0 is °): read them
 # as the characters they draw.
@@ -252,13 +255,13 @@ def expand(paths: list[Path], tmp: Path) -> list[Page]:
         elif suffix == ".pdf":
             for tool in ("pdftoppm", "pdftotext", "pdfimages", "pdfinfo"):
                 if not shutil.which(tool):
-                    raise SystemExit(f"{tool} is not installed — it reads PDF pages; install poppler "
-                                     "(e.g. apt install poppler-utils, brew install poppler)")
+                    raise SystemExit(f"{tool} is not installed — it reads PDF pages; install poppler: "
+                                     f"{POPPLER_INSTALL}")
             prefix = tmp / f"{len(pages):03d}-{path.stem}"
             subprocess.run(["pdftoppm", "-r", str(PDF_DPI), "-jpeg", "-jpegopt", "quality=88",
                             str(path), str(prefix)], check=True)
-            texts = subprocess.run(["pdftotext", "-layout", str(path), "-"], check=True,
-                                   capture_output=True, text=True).stdout.translate(SYMBOL_FONT).split("\f")
+            texts = subprocess.run(["pdftotext", "-layout", str(path), "-"], check=True, capture_output=True,
+                                   encoding="utf-8", errors="replace").stdout.translate(SYMBOL_FONT).split("\f")
             scans = scanned_pages(path)
             for n, image in enumerate(sorted(tmp.glob(f"{prefix.name}-*.jpg")), 1):
                 # A scanned page's text is OCR, not the document's own: often
@@ -277,10 +280,11 @@ def scanned_pages(pdf: Path) -> set[int]:
     """The pages of a PDF that are pictures of paper: one image covers the page,
     so any text layer on them was added by OCR."""
     info = subprocess.run(["pdfinfo", "-f", "1", "-l", "100000", str(pdf)], check=True,
-                          capture_output=True, text=True).stdout
+                          capture_output=True, encoding="utf-8", errors="replace").stdout
     sizes = {int(n): float(w) * float(h) / 72 / 72
              for n, w, h in re.findall(r"^Page\s+(\d+) size:\s+([\d.]+) x ([\d.]+)", info, flags=re.M)}
-    listing = subprocess.run(["pdfimages", "-list", str(pdf)], check=True, capture_output=True, text=True).stdout
+    listing = subprocess.run(["pdfimages", "-list", str(pdf)], check=True, capture_output=True,
+                             encoding="utf-8", errors="replace").stdout
     scans = set()
     for line in listing.splitlines()[2:]:
         cols = line.split()

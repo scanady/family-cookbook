@@ -73,9 +73,15 @@ notes describe the method, not the book it was measured on.
   `docs/COMMANDS.md`'s command tables.
 - `README.md` (start here for users: install and the five commands most books
   need; keep it that short), `CONTRIBUTING.md` (issues only, no pull requests).
-- `install.sh` — the one-step setup and upgrade for a book folder: venv, engine,
-  Chromium, `cookbook init`, the key, a `./cookbook` launcher, `cookbook doctor`.
-  Its `VERSION` is the release tag it installs.
+- `install.ps1` (Windows, the default the README shows first) and `install.sh`
+  (macOS, Linux) — the one-step setup and upgrade for a book folder: Python if
+  missing (Windows), venv, engine from the release's source archive, Chromium,
+  Ghostscript (Windows), `cookbook init`, the key, a `./cookbook` launcher,
+  `cookbook doctor`. Their `VERSION` is the release tag they install; CI runs
+  both against the checkout, `install.ps1` under Windows PowerShell 5.1.
+- Windows: Ghostscript is `gswin64c`, found off PATH under Program Files
+  (`export.find_ghostscript`); console and subprocess text is UTF-8 explicitly;
+  skill links fall back to copies.
 - `examples/{book}/` — complete public book roots; CI builds each in print mode.
 
 The engine makes the book's files to the printer's specification and stops
@@ -109,9 +115,9 @@ the engine source is not present: they reference `cookbook ...` commands and
 ## Releases
 
 Bump `version` in `pyproject.toml`, `__version__` in
-`src/family_cookbook/__init__.py`, and `VERSION` in `install.sh`; update the tag
-in `docs/COMMANDS.md`'s install-by-hand steps; add a `CHANGELOG.md` entry; and
-tag `vX.Y.Z`. Book repositories pin the tag.
+`src/family_cookbook/__init__.py`, and `VERSION` in `install.sh` and
+`install.ps1`; update the tag in `docs/COMMANDS.md`'s install-by-hand steps; add
+a `CHANGELOG.md` entry; and tag `vX.Y.Z`. Book repositories pin the tag.
 
 ## Repository hygiene
 

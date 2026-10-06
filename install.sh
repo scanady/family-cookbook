@@ -9,8 +9,9 @@
 # somewhere else (a local clone, say).
 set -euo pipefail
 
-VERSION="${COOKBOOK_VERSION:-v1.2.1}"
-PACKAGE="${COOKBOOK_PACKAGE:-family-cookbook @ git+https://github.com/scanady/family-cookbook@$VERSION}"
+VERSION="${COOKBOOK_VERSION:-v1.3.0}"
+# The release's source archive: pip needs no git for it.
+PACKAGE="${COOKBOOK_PACKAGE:-family-cookbook @ https://github.com/scanady/family-cookbook/archive/refs/tags/$VERSION.zip}"
 DIR="${1:-our-cookbook}"
 
 say() { printf '\n==> %s\n' "$*"; }

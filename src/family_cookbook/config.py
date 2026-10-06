@@ -75,13 +75,15 @@ def active_root() -> BookRoot:
 def load_env(root: BookRoot) -> None:
     """Credentials from `<book root>/.env` (KEY=VALUE lines, # comments) into the
     environment, never overriding a variable already set. The file holds the AI
-    model key (GEMINI_API_KEY); the book's .gitignore keeps it out of history."""
+    key (OPENROUTER_API_KEY or GEMINI_API_KEY); the book's .gitignore keeps it out
+    of history."""
     import os
 
     path = root.path / ".env"
     if not path.is_file():
         return
-    for line in path.read_text(encoding="utf-8").splitlines():
+    # utf-8-sig: Windows editors may start the file with a byte-order mark.
+    for line in path.read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()
         if not line or line.startswith("#") or "=" not in line:
             continue
