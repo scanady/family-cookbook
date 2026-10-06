@@ -104,24 +104,26 @@ def cost(model: str, input_tokens: int, output_tokens: int, image_tokens: int = 
     return usd / 1_000_000
 
 
+def api_key() -> str | None:
+    """The Gemini key from the environment, which the CLI fills from the book's
+    .env (config.load_env). GEMINI_API_KEY or GOOGLE_API_KEY, as the SDK reads."""
+    return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or None
+
+
+# What every AI command says when there is no key, before it carries on without AI.
+NO_KEY = ("AI is off: no Gemini API key. Get one at https://aistudio.google.com/apikey and paste it "
+          "after GEMINI_API_KEY= in the book's .env file.")
+
+
 class Gemini:
-    """Google's Gemini API through the google-genai SDK. The key comes from
-    GEMINI_API_KEY or GOOGLE_API_KEY, the variables the SDK itself reads."""
+    """Google's Gemini API through the google-genai SDK."""
 
     def __init__(self, name: str) -> None:
-        try:
-            from google import genai
-        except ImportError:
-            raise SystemExit(
-                "the google-genai package is not installed — install the engine's AI extra: "
-                'pip install "family-cookbook[ai] @ git+https://github.com/scanady/family-cookbook@v1.0.0"'
-            ) from None
-        key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
+        from google import genai
+
+        key = api_key()
         if not key:
-            raise SystemExit(
-                "no Gemini API key — add GEMINI_API_KEY=... to the book's .env file (see .env.example) "
-                "or set it in your environment; create one at https://aistudio.google.com/apikey"
-            )
+            raise SystemExit(NO_KEY)
         self.name = name
         self._client = genai.Client(api_key=key)
 

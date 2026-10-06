@@ -1,7 +1,7 @@
 """The example book carries four defects on purpose, so `cookbook review` and the
 book report have something real to show. This keeps them there, and keeps the
 audit catching them: a change that loses one, or a fix that removes one, fails
-here. The list is in README.md ("Try the review on the example book")."""
+here. The list is in docs/COMMANDS.md ("The example book")."""
 import re
 import subprocess
 import sys

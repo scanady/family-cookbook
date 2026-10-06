@@ -359,9 +359,10 @@ def check_config_keys(rep: Report) -> None:
             )
 
 
-# What `cookbook init` writes into every page and setting it cannot fill in.
+# What `cookbook init` writes into every page and setting it cannot fill in, and
+# what `cookbook ingest` without AI leaves for a person to type.
 PLACEHOLDER = "TODO"
-PLACEHOLDER_HINT = "placeholder text from `cookbook init` — replace it before printing"
+PLACEHOLDER_HINT = "placeholder text — replace it before printing"
 
 
 def check_placeholders(rep: Report) -> None:

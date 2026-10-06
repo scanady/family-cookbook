@@ -96,3 +96,12 @@ jobs:
           cookbook press --book "$book"
           test -s "$book/draft/cookbook-interior-press.pdf"
           test -s "$book/draft/cookbook-cover.pdf"
+
+      # install.sh from this checkout, with no terminal: defaults, no key.
+      - name: install.sh sets up a book that is ready to print
+        run: |
+          COOKBOOK_PACKAGE="$PWD" bash install.sh "$RUNNER_TEMP/installed-book" </dev/null
+          cd "$RUNNER_TEMP/installed-book"
+          ./cookbook doctor
+          test -f book/book.yaml
+          git init -q && git check-ignore -q .env

@@ -11,7 +11,6 @@ book/recipes/**/*-spread.jpg
 __pycache__/
 .venv/
 
-# AI model keys (GEMINI_API_KEY) — never commit them. .env.example holds no key.
+# The AI key (GEMINI_API_KEY): never commit it.
 .env
 .env.*
-!.env.example

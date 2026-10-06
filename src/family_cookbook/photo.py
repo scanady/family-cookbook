@@ -18,7 +18,8 @@ For each recipe:
    prompt: where the dish landed, and where it has to go.
 
 The prompt that produced the accepted photo is the one saved, corrections
-included, so the photo can be made again.
+included, so the photo can be made again. Without an API key it warns and
+makes nothing: the book lays out without a photo.
 """
 from __future__ import annotations
 
@@ -26,6 +27,7 @@ import datetime as dt
 import io
 import re
 import shutil
+import sys
 from importlib import resources
 from pathlib import Path
 
@@ -280,6 +282,10 @@ def main(root: config.BookRoot, slugs: list[str], *, attempts: int = 3, new_prom
     missing = [s for s in slugs if s not in recipes]
     if missing:
         raise SystemExit(f"no recipe with slug {', '.join(missing)} in book/recipes/")
+    if not models.api_key():
+        print(models.NO_KEY, file=sys.stderr)
+        print("No photo made: the recipe prints without one.")
+        return 0
     text_model = models.load(model_name)
     image_model = None if prompt_only else models.load(image_model_name)
 

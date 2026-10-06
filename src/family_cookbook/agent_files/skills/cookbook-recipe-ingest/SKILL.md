@@ -40,7 +40,9 @@ cookbook ingest family-cookbook.pdf --pages 12-30 # a range of a longer document
 cookbook ingest card.jpg --cook "Ruth Baker"      # credit a card that names no one
 ```
 
-It needs `GEMINI_API_KEY`. It reads the pages with a vision model, joins recipes that run across pages, files each recipe in a chapter from `book/book.yaml`, and writes `recipe.md`, `sources/recipe-original.md`, and the page images under `sources/`. Prose entries are reported as `SKIPPED`, not written: ingest those by hand.
+It uses AI when `GEMINI_API_KEY` is set (in the book's `.env`). It reads the pages with a vision model, joins recipes that run across pages, files each recipe in a chapter from `book/book.yaml`, and writes `recipe.md`, `sources/recipe-original.md`, and the page images under `sources/`. Prose entries are reported as `SKIPPED`, not written: ingest those by hand.
+
+Without a key it prints `AI is off` and files all the pages given as one recipe (`--title`, `--chapter`), with the page images under `sources/` and a `recipe.md` whose ingredients and directions are `TODO` lines. The folder settles Step 2; continue the manual workflow below at Step 3, keeping the page images, and replace every `TODO` line.
 
 Its output is a first draft for you to verify, not a finished entry. Then:
 

@@ -9,7 +9,6 @@ dist/
 # AI model keys (GEMINI_API_KEY): never commit them.
 .env
 .env.*
-!.env.example
 
 # Example books' build output and derived photo crops
 examples/*/draft/

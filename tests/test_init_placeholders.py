@@ -1,6 +1,6 @@
 """What `cookbook init` leaves for the family to fill in: lint calls every
 placeholder an error, press stops on them before building anything, and the
-AI key's example file is the one .env file git keeps.
+.env it writes for the AI key stays out of git.
 
 Each test runs the real command in a fresh process: the layout modules read
 the book root once, when they are first imported."""
@@ -81,9 +81,8 @@ def test_press_stops_on_lint_errors_before_building(book):
 
 
 @pytest.mark.skipif(not shutil.which("git"), reason="needs git")
-def test_init_writes_an_env_example_git_keeps(book):
-    assert "GEMINI_API_KEY=" in (book / ".env.example").read_text(encoding="utf-8")
+def test_init_writes_an_env_git_never_commits(book):
+    assert "GEMINI_API_KEY=" in (book / ".env").read_text(encoding="utf-8")
     subprocess.run(["git", "init", "-q"], cwd=book, check=True)
     ignored = lambda name: subprocess.run(["git", "check-ignore", "-q", name], cwd=book).returncode == 0
-    assert not ignored(".env.example")
     assert ignored(".env")

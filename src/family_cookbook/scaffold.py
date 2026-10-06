@@ -140,8 +140,8 @@ def main(root: Path, categories: list[str], sections: list[str], title: str,
     s.write(book / "cover.md", template("cover.md"))
     # draft/ and the derived photo crops are build output, never source.
     s.write(root / ".gitignore", template("gitignore"))
-    # Where the AI key goes, for ingest and photo; .env itself is gitignored.
-    s.write(root / ".env.example", template("env.example"))
+    # Where the AI key goes, for ingest and photo; .gitignore keeps it out of history.
+    s.write(root / ".env", template("env"))
 
     prefix = "would create" if dry_run else "created"
     print(f"{prefix}: {len(s.created)}")
@@ -151,10 +151,6 @@ def main(root: Path, categories: list[str], sections: list[str], title: str,
         print(f"\nalready present, left alone: {len(s.skipped)}")
         for path in s.skipped:
             print(f"  = {path}")
-
-    print("\nbook/book.yaml carries the structure. Review the accents (they should")
-    print("differ between adjacent chapters) and replace the TODO placeholders, then run")
-    print("  cookbook lint && cookbook build")
     return 0
 
 

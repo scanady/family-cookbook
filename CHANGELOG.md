@@ -1,5 +1,27 @@
 # Changelog
 
+## 1.1.0
+
+Getting started takes one command, and AI is on by default.
+
+- **`install.sh`** sets up a book in one step: the engine in the folder's own
+  virtual environment, Chromium, a new book (it asks for the title and
+  subtitle), the Gemini key (optional), and a `./cookbook` launcher that needs
+  no activated virtual environment. Run it again to upgrade.
+- **AI is part of the install.** `google-genai` is a regular dependency; the
+  `ai` extra is gone.
+- **No key, no stop.** Without `GEMINI_API_KEY`, `cookbook ingest` warns and
+  files the pages as one recipe to type up beside the card in the studio
+  (`--title` names it), and `cookbook photo` warns and makes nothing.
+- **`cookbook doctor`** checks Chromium, Ghostscript, poppler, the AI key, and
+  the book folder, and prints the command that fixes each one missing.
+- **`cookbook init`** writes `.env` (empty key, ignored by git) instead of
+  `.env.example`, defaults `--categories` to `breakfast,mains,sides,desserts`,
+  and ends with the next commands to run.
+- **Docs.** The README covers install and the five commands most books need;
+  the full command reference moved to `docs/COMMANDS.md`, troubleshooting and
+  the glossary to `docs/TROUBLESHOOTING.md`.
+
 ## 1.0.0
 
 First public release, under the PolyForm Noncommercial License 1.0.0: free for

@@ -37,10 +37,19 @@ def cmd_init(args: argparse.Namespace) -> int:
     root.mkdir(parents=True, exist_ok=True)
     status = scaffold.main(root, _split(args.categories), _split(args.sections),
                            args.title, args.subtitle, args.edition, args.dry_run)
-    if status == 0 and not args.dry_run:
-        print()
-        scaffold.install_agent_files(root, update=False)
-    return status
+    if status != 0 or args.dry_run:
+        return status
+    print()
+    scaffold.install_agent_files(root, update=False)
+    config.load_env(config.BookRoot(root))
+    print("\nThe book is started. Next:\n"
+          "  cookbook studio              see the book in your browser and work on it\n"
+          "  cookbook ingest card.jpg     add a recipe from a photo or scan of the card\n"
+          "  cookbook lint                list the TODO lines that are yours to write\n"
+          "  cookbook press               make the two PDFs for the printer")
+    if not models.api_key():
+        print(f"\n{models.NO_KEY}", file=sys.stderr)
+    return 0
 
 
 def cmd_build(args: argparse.Namespace) -> int:
@@ -111,7 +120,7 @@ def cmd_ingest(args: argparse.Namespace) -> int:
     from . import ingest
 
     return ingest.main(root, args.files, page_spec=args.pages, chapter=args.chapter, cook=args.cook,
-                       model_name=args.model, dry_run=args.dry_run)
+                       title=args.title, model_name=args.model, dry_run=args.dry_run)
 
 
 def cmd_photo(args: argparse.Namespace) -> int:
@@ -136,6 +145,18 @@ def cmd_studio(args: argparse.Namespace) -> int:
     from . import studio
 
     return studio.main(root, port=args.port, open_browser=not args.no_open)
+
+
+def cmd_doctor(args: argparse.Namespace) -> int:
+    from . import doctor
+
+    try:
+        root = config.find_root(args.book or Path.cwd())
+    except config.ConfigError:
+        root = None
+    if root:
+        config.load_env(root)
+    return doctor.main(root)
 
 
 def _step(name: str) -> None:
@@ -204,8 +225,9 @@ def parser() -> argparse.ArgumentParser:
              "to fill in, and the guides AI coding assistants follow", parents=())
     sp.add_argument("--book", type=Path, metavar="PATH",
                     help="folder to create the book in (default: the current folder)")
-    sp.add_argument("--categories", required=True,
-                    help="comma-separated recipe chapters, in book order, e.g. mains,desserts")
+    sp.add_argument("--categories", default="breakfast,mains,sides,desserts",
+                    help="comma-separated recipe chapters, in book order (default: "
+                         "breakfast,mains,sides,desserts)")
     sp.add_argument("--sections", default="",
                     help="comma-separated chapters of writing rather than recipes (family "
                          "stories, kitchen tips), in book order")
@@ -219,15 +241,22 @@ def parser() -> argparse.ArgumentParser:
     sp.add_argument("--dry-run", action="store_true",
                     help="list what would be created, write nothing")
 
+    add("Start", "doctor", cmd_doctor,
+        "check this computer can make the book: the browser, Ghostscript, poppler, the AI key, "
+        "and the book folder, with the command that fixes each")
+
     sp = add("Write and review", "ingest", cmd_ingest,
              "type up photos or scans of recipe cards and cookbook pages with an AI model, "
-             "into book/recipes/ (word-for-word copy plus a clean recipe.md)")
+             "into book/recipes/ (word-for-word copy plus a clean recipe.md); without an AI "
+             "key, file the pages as one recipe to type up by hand")
     sp.add_argument("files", nargs="+", type=Path, metavar="FILE",
                     help="photos or scans (jpg, png, webp, heic) or PDFs: the pages of one source, in order")
     sp.add_argument("--pages", default="", metavar="PAGES",
                     help="read only these pages of the input, e.g. 3, 3-5, or 1,4-6")
     sp.add_argument("--chapter", default="", help="file every recipe in this chapter (default: the model picks)")
     sp.add_argument("--cook", default="", help="credit every recipe to this person (default: whoever the source names)")
+    sp.add_argument("--title", default="",
+                    help="without AI: the recipe's title (default: from the first file's name)")
     sp.add_argument("--model", default=models.DEFAULT_MODEL, metavar="MODEL",
                     help=f"the model to read with (default: {models.DEFAULT_MODEL})")
     sp.add_argument("--dry-run", action="store_true",
@@ -235,7 +264,7 @@ def parser() -> argparse.ArgumentParser:
 
     sp = add("Write and review", "photo", cmd_photo,
              "make a photo of each recipe's finished dish with an AI model, retrying until "
-             "it fits the page, into images/{slug}.jpg")
+             "it fits the page, into images/{slug}.jpg (needs an AI key)")
     sp.add_argument("slugs", nargs="+", metavar="SLUG",
                     help="recipes to photograph, by folder name (e.g. skillet-cornbread)")
     sp.add_argument("--attempts", type=int, default=3, metavar="N",

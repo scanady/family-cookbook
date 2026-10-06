@@ -38,6 +38,7 @@ notes describe the method, not the book it was measured on.
   width, recommended gutter, hardcover minimum).
 - `lint.py`, `fit_images.py`, `check.py`, `index.py`, `export.py` — the other
   commands. `scaffold.py` — `cookbook init` and `cookbook agent-files`.
+  `doctor.py` — `cookbook doctor`, the setup checks with the fix for each.
 - `audit.py` — `cookbook audit`: the content checks (truncation, cook time,
   invented figures, missing ingredients, dropped lines, same cook, personal
   data) and the book report, which also gathers lint, the photo rules, and
@@ -46,10 +47,11 @@ notes describe the method, not the book it was measured on.
   run on a real book: tune it until the remaining findings are real.
 - `ingest.py`, `photo.py`, `review.py` — the AI intake commands: transcribe
   cards, generate dish photos, review against the originals. `models.py` puts
-  the AI providers behind one interface (`pip install '.[ai]'`, `GEMINI_API_KEY`)
-  and logs cost to `book/sources/ai-log.jsonl`. Their prompts load the rules
-  from the agent files, so a rule changes in one place. Tests use stand-in
-  models; never call a real model from `tests/`.
+  the AI providers behind one interface (`GEMINI_API_KEY`, from the book's
+  `.env`) and logs cost to `book/sources/ai-log.jsonl`. With no key, `ingest`
+  and `photo` print `models.NO_KEY` and carry on without AI; nothing else needs
+  a key. Their prompts load the rules from the agent files, so a rule changes
+  in one place. Tests use stand-in models; never call a real model from `tests/`.
 - `studio.py` — `cookbook studio`, the local web app for working on an existing
   book without a terminal: draft, review (review.py's own editor and endpoints),
   chapter and entry order, keepsakes, report, and the print files. It
@@ -59,14 +61,20 @@ notes describe the method, not the book it was measured on.
 - `press.py` — the press sequence, shared by `cookbook press` and the studio.
 - `fonts/` (OFL), `templates/` (what `cookbook init` writes), `agent_files/`
   (skills and content instructions copied into book roots) are package data.
-- `docs/` — user documentation: `PRINTING.md` (the print specification and press
-  workflow for any book), `RECIPE-FORMAT.md` (recipe, page, photo, and keepsake
-  files), `BOOK-YAML.md` (every `book.yaml` key), `LAYOUTS.md` (the archetypes and
-  how they are assigned; its images, in `docs/images/`, are screenshots of the
-  example book's draft). A change to a format, key, command, or layout rule
-  updates the doc that describes it, and the README's command tables.
-- `README.md` (start here for users), `CONTRIBUTING.md` (issues only, no pull
-  requests).
+- `docs/` — user documentation: `COMMANDS.md` (every command, the book's
+  folder, installing by hand, upgrading, the container, the example book),
+  `TROUBLESHOOTING.md` (problems and the glossary), `PRINTING.md` (the print
+  specification and press workflow for any book), `RECIPE-FORMAT.md` (recipe,
+  page, photo, and keepsake files), `BOOK-YAML.md` (every `book.yaml` key),
+  `LAYOUTS.md` (the archetypes and how they are assigned; its images, in
+  `docs/images/`, are screenshots of the example book's draft). A change to a
+  format, key, command, or layout rule updates the doc that describes it, and
+  `docs/COMMANDS.md`'s command tables.
+- `README.md` (start here for users: install and the five commands most books
+  need; keep it that short), `CONTRIBUTING.md` (issues only, no pull requests).
+- `install.sh` — the one-step setup and upgrade for a book folder: venv, engine,
+  Chromium, `cookbook init`, the key, a `./cookbook` launcher, `cookbook doctor`.
+  Its `VERSION` is the release tag it installs.
 - `examples/{book}/` — complete public book roots; CI builds each in print mode.
 
 The engine makes the book's files to the printer's specification and stops
@@ -99,12 +107,13 @@ the engine source is not present: they reference `cookbook ...` commands and
 
 ## Releases
 
-Bump `version` in `pyproject.toml` and `__version__` in
-`src/family_cookbook/__init__.py`, add a `CHANGELOG.md` entry, and tag `vX.Y.Z`.
-Book repositories pin the tag.
+Bump `version` in `pyproject.toml`, `__version__` in
+`src/family_cookbook/__init__.py`, and `VERSION` in `install.sh`; update the tag
+in `docs/COMMANDS.md`'s install-by-hand steps; add a `CHANGELOG.md` entry; and
+tag `vX.Y.Z`. Book repositories pin the tag.
 
 ## Repository hygiene
 
 Delete one-off migration, debugging, and probe scripts after use, together with
 their temporary outputs. Keep a new script only when it becomes a supported
-`cookbook` command, and document it in the README.
+`cookbook` command, and document it in `docs/COMMANDS.md`.

@@ -19,6 +19,10 @@ else is reported as possibly invented, by recipe, for a person to check.
 Writes book/recipes/{chapter}/{slug}/ with recipe.md, sources/recipe-original.md,
 and the page images, and appends each recipe's token use and cost to
 book/sources/ai-log.jsonl. Non-recipe entries are reported, not written.
+
+Without an API key it warns and does the part that needs no model: the pages
+become one recipe folder with the original kept, and a recipe.md for a person
+to type up beside it.
 """
 from __future__ import annotations
 
@@ -26,6 +30,7 @@ import datetime as dt
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import unicodedata
 from dataclasses import dataclass, field
@@ -440,9 +445,27 @@ def original_markdown(title: str, cook: str, verbatim: str, provenance: str, ima
         lines += [f"*{cook}*", ""]
     lines += [provenance, ""]
     lines += [f"![Page {n}]({name})" for n, name in enumerate(images, 1)]
-    body = verbatim.replace("```", "'''")  # a fence inside would end the block render.py reads
-    lines += ["", "## Original Recipe", "", "```text", body, "```", "", "[View the updated recipe](../recipe.md)"]
+    if verbatim:
+        body = verbatim.replace("```", "'''")  # a fence inside would end the block render.py reads
+        lines += ["", "## Original Recipe", "", "```text", body, "```"]
+    lines += ["", "[View the updated recipe](../recipe.md)"]
     return "\n".join(lines) + "\n"
+
+
+def keep_pages(sources: Path, pages: list[Page]) -> list[str]:
+    """Copy the pages into sources/ as original-1.jpg, original-2.png, …"""
+    sources.mkdir(parents=True)
+    names: list[str] = []
+    for page in pages:
+        name = f"original-{len(names) + 1}{page.image.suffix.lower()}"
+        shutil.copyfile(page.image, sources / name)
+        names.append(name)
+    return names
+
+
+def _today() -> str:
+    today = dt.date.today()
+    return f"{today:%B} {today.day}, {today.year}"
 
 
 # ---- the check the model does not get a say in --------------------------------
@@ -528,7 +551,7 @@ def existing_entry(book: Path, slug: str) -> Path | None:
 # ---- the command ------------------------------------------------------------------
 
 def main(root: config.BookRoot, paths: list[Path], *, page_spec: str = "", chapter: str = "",
-         cook: str = "", model_name: str = models.DEFAULT_MODEL, dry_run: bool = False) -> int:
+         cook: str = "", title: str = "", model_name: str = models.DEFAULT_MODEL, dry_run: bool = False) -> int:
     cfg = config.load_or_exit(root)
     chapters = [c for c in cfg.chapters if c.kind == "recipes"]
     if not chapters:
@@ -537,6 +560,10 @@ def main(root: config.BookRoot, paths: list[Path], *, page_spec: str = "", chapt
     lookup = {key.casefold(): c for c in chapters for key in (c.name, c.label)}
     if chapter and chapter.casefold() not in lookup:
         raise SystemExit(f"--chapter {chapter!r} is not a recipe chapter: {', '.join(c.name for c in chapters)}")
+    if not models.api_key():
+        print(models.NO_KEY, file=sys.stderr)
+        return by_hand(root, paths, page_spec=page_spec, chapter=lookup[chapter.casefold()] if chapter else None,
+                       chapters=chapters, cook=cook, title=title, dry_run=dry_run)
     model = models.load(model_name)
 
     with tempfile.TemporaryDirectory() as t:
@@ -583,19 +610,10 @@ def main(root: config.BookRoot, paths: list[Path], *, page_spec: str = "", chapt
             result.recipe_md = recipe_markdown(fields, home, credited, linked_source=True)
             if dry_run:
                 continue
-            sources = folder / "sources"
-            sources.mkdir(parents=True)
-            kept = []
-            for n in entry.pages:
-                image = page_of[n].image
-                name = f"original-{len(kept) + 1}{image.suffix.lower()}"
-                shutil.copyfile(image, sources / name)
-                kept.append(name)
+            kept = keep_pages(folder / "sources", [page_of[n] for n in entry.pages])
             labels = ", ".join(page_of[n].label for n in entry.pages)
-            today = dt.date.today()
-            provenance = (f"Transcribed by `cookbook ingest` ({model.name}, "
-                          f"{today:%B} {today.day}, {today.year}) from {labels}.")
-            (sources / "recipe-original.md").write_text(
+            provenance = f"Transcribed by `cookbook ingest` ({model.name}, {_today()}) from {labels}."
+            (folder / "sources" / "recipe-original.md").write_text(
                 original_markdown(fields["title"].strip(), credited, entry.verbatim, provenance, kept), encoding="utf-8")
             (folder / "recipe.md").write_text(result.recipe_md, encoding="utf-8")
             models.log(root.book, {
@@ -609,6 +627,55 @@ def main(root: config.BookRoot, paths: list[Path], *, page_spec: str = "", chapt
             })
 
     return report(root, results, dry_run, [page_of[n].label for n in unread])
+
+
+# What a recipe added without AI holds until a person types it up: lint reports
+# each TODO line as an error, so press cannot print it unfinished.
+TYPE_INGREDIENTS = "TODO: type the ingredients from the original"
+TYPE_DIRECTIONS = "TODO: type the directions from the original"
+
+
+def by_hand(root: config.BookRoot, paths: list[Path], *, page_spec: str, chapter: config.Chapter | None,
+            chapters: list[config.Chapter], cook: str, title: str, dry_run: bool) -> int:
+    """Without AI: every page given is one recipe. Its pages are kept as the
+    original, beside a recipe.md to type up in `cookbook studio` or an editor."""
+    notes = []
+    if not title.strip():
+        title = re.sub(r"[-_\s]+", " ", paths[0].stem).strip().capitalize()
+        notes.append(f"titled “{title}” from the file name: pass --title to choose")
+    if chapter is None:
+        chapter = chapters[0]
+        notes.append(f"filed in {chapter.name}: pass --chapter to choose")
+    slug = slugify(title)
+    if not slug:
+        raise SystemExit("give the recipe a title with --title")
+    taken = existing_entry(root.book, slug)
+    if taken:
+        raise SystemExit(f"{taken.relative_to(root.path)} already exists: pass another --title")
+    folder = root.book / "recipes" / chapter.name / slug
+    where = folder.relative_to(root.path)
+    fields = {"title": title.strip(), "ingredient_groups": [{"heading": "", "items": [TYPE_INGREDIENTS]}],
+              "directions": [TYPE_DIRECTIONS], "notes": []}
+    with tempfile.TemporaryDirectory() as t:
+        pages = [page for _, page in select(expand(paths, Path(t)), page_spec)]
+        if len(pages) > 2:
+            notes.append(f"all {len(pages)} pages went into this one recipe: for a file holding several, "
+                         "run once per recipe with --pages")
+        if not dry_run:
+            kept = keep_pages(folder / "sources", pages)
+            provenance = (f"Added by `cookbook ingest` without AI ({_today()}) from "
+                          f"{', '.join(p.label for p in pages)}.")
+            (folder / "sources" / "recipe-original.md").write_text(
+                original_markdown(fields["title"], cook, "", provenance, kept), encoding="utf-8")
+            (folder / "recipe.md").write_text(recipe_markdown(fields, chapter, cook, linked_source=True),
+                                              encoding="utf-8")
+    print(f"\n{'WOULD WRITE' if dry_run else 'WROTE'}  {where}  ({len(pages)} page(s), to type up by hand)")
+    for note in notes:
+        print(f"  NOTE   {note}")
+    if not dry_run:
+        print(f"\nNext: type it up beside the original in cookbook studio (Recipes tab), or in {where}/recipe.md")
+    return 0
+
 
 
 def _money(usage: models.Usage) -> str:

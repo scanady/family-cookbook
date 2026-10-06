@@ -23,8 +23,7 @@ RUN apt-get update \
 WORKDIR /opt/engine
 COPY pyproject.toml README.md LICENSE ./
 COPY src ./src
-# The AI extra lets the same image run `cookbook ingest` and `cookbook photo`.
-RUN pip install '.[ai]' \
+RUN pip install . \
  && python -m playwright install --with-deps chromium \
  && rm -rf /var/lib/apt/lists/* \
  && cookbook --version

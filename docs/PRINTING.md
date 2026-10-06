@@ -8,12 +8,14 @@ tool.
 
 ## Prerequisites
 
-- The engine installed (`pip install "git+https://github.com/scanady/family-cookbook@v1.0.0"`, see the [README](../README.md#install)), or its container image (README, "In a container"), which has everything below.
-- Chromium for Playwright: `python -m playwright install chromium`.
-- Ghostscript (`gs`) on your `PATH`, for the interior compression.
+- The engine installed (see the [README](../README.md#install), or
+  [install by hand](COMMANDS.md#install-by-hand)), or its
+  [container image](COMMANDS.md#in-a-container), which has everything below.
+- Chromium for Playwright and Ghostscript (`gs`) on your `PATH`, for the
+  interior compression.
 
-`cookbook press` checks for both and fails with a clear message if either is
-missing.
+`cookbook doctor` checks for both and prints the command that installs either
+one missing; `cookbook press` fails with a clear message without them.
 
 ## Build the two files
 
