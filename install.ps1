@@ -105,6 +105,16 @@ if (-not (Find-Ghostscript)) {
     }
 }
 
+if (-not (Get-Command pdftoppm -ErrorAction SilentlyContinue) -and (Get-Command winget -ErrorAction SilentlyContinue)) {
+    Say 'Installing poppler, which reads PDF files of recipes'
+    & winget install -e --id oschwartz10612.Poppler --accept-package-agreements --accept-source-agreements --disable-interactivity
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning 'poppler was not installed: recipes from photos still work; for PDFs, run: winget install -e --id oschwartz10612.Poppler'
+    }
+    # winget puts it on PATH for new windows; this one needs it too.
+    $env:Path += ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
+}
+
 # A launcher, so no virtual environment has to be activated: ./cookbook studio
 $launcher = @(
     '@echo off',

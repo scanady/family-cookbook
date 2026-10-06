@@ -124,7 +124,7 @@ jobs:
         run: choco install ghostscript -y --no-progress
 
       # Windows PowerShell 5.1, the one every Windows has, running the script the
-      # way `irm ... | iex` does: defaults, no key.
+      # way `irm ... | iex` does: defaults, no key; poppler from winget.
       - name: install.ps1 sets up a book that is ready to print
         shell: powershell
         env:
@@ -134,8 +134,10 @@ jobs:
         run: |
           Get-Content install.ps1 -Raw | Invoke-Expression
           Set-Location $env:COOKBOOK_DIR
-          ./cookbook doctor   # as the README writes it
+          $doctor = ./cookbook doctor   # as the README writes it
+          $doctor
           if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (-not ($doctor -match '^\s+ok\s+poppler')) { exit 1 }
           if (-not (Test-Path book\book.yaml)) { exit 1 }
 
       - name: Tests
@@ -169,13 +171,9 @@ jobs:
           .\cookbook.cmd press
           if ($LASTEXITCODE -ne 0) { exit 1 }
           if (-not ((Test-Path draft\cookbook-interior-press.pdf) -and (Test-Path draft\cookbook-cover.pdf))) { exit 1 }
-
-      # What `cookbook doctor` tells a Windows user to run for poppler: does it
-      # put pdftoppm where the engine looks?
-      - name: Poppler from winget
-        continue-on-error: true
-        shell: powershell
-        run: |
-          winget install -e --id oschwartz10612.Poppler --accept-package-agreements --accept-source-agreements --disable-interactivity
-          Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Links" -ErrorAction SilentlyContinue | Select-Object Name
-          [Environment]::GetEnvironmentVariable('Path', 'User')
+          # A PDF read with poppler, without AI: the pages become a recipe to type up.
+          $env:Path += ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
+          # Continue: the "AI is off" note goes to stderr, which Stop would treat as a failure.
+          & { $ErrorActionPreference = 'Continue'; .\cookbook.cmd ingest draft\cookbook-cover.pdf --title "Cover Test" }
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          if (-not (Test-Path book\recipes\breakfast\cover-test\sources\original-1.jpg)) { exit 1 }
