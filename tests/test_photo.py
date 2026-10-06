@@ -23,7 +23,7 @@ def test_every_generated_shape_becomes_an_8_by_11_master(tmp_path, size):
 
 
 def recipe(tmp_path, body: str):
-    (tmp_path / "recipe.md").write_text(body)
+    (tmp_path / "recipe.md").write_text(body, encoding="utf-8")
     return SimpleNamespace(folder=tmp_path, slug="gingerbread", title="Spicy Gingerbread")
 
 
@@ -31,7 +31,7 @@ def test_the_photo_line_goes_before_the_metadata_once(tmp_path):
     r = recipe(tmp_path, "# Spicy Gingerbread\n\n*Shirley G*\n\n- **Category:** Desserts\n\n## Ingredients\n\n- 2 eggs\n")
     photo.link_photo(r)
     photo.link_photo(r)
-    assert (tmp_path / "recipe.md").read_text() == (
+    assert (tmp_path / "recipe.md").read_text(encoding="utf-8") == (
         "# Spicy Gingerbread\n\n*Shirley G*\n\n![Spicy Gingerbread](images/gingerbread.jpg)\n\n"
         "- **Category:** Desserts\n\n## Ingredients\n\n- 2 eggs\n"
     )
@@ -40,6 +40,6 @@ def test_the_photo_line_goes_before_the_metadata_once(tmp_path):
 def test_a_recipe_without_metadata_gets_the_line_before_its_first_section(tmp_path):
     r = recipe(tmp_path, "# Spicy Gingerbread\n\n## Ingredients\n\n- 2 eggs\n")
     photo.link_photo(r)
-    assert (tmp_path / "recipe.md").read_text().startswith(
+    assert (tmp_path / "recipe.md").read_text(encoding="utf-8").startswith(
         "# Spicy Gingerbread\n\n![Spicy Gingerbread](images/gingerbread.jpg)\n\n## Ingredients"
     )

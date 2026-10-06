@@ -17,7 +17,7 @@ def write_pdf(path: Path, pages: int, inches: tuple[float, float]) -> None:
 def press_book(tmp_path):
     """A book root with its press PDFs built: a 3-page interior and a 19 x 12.75 in cover."""
     (tmp_path / "book").mkdir()
-    (tmp_path / "book" / "book.yaml").write_text('book:\n  title: "Test Kitchen"\n')
+    (tmp_path / "book" / "book.yaml").write_text('book:\n  title: "Test Kitchen"\n', encoding="utf-8")
     (tmp_path / "draft").mkdir()
     write_pdf(tmp_path / "draft" / "cookbook-interior-press.pdf", 3, (8.75, 11.25))
     write_pdf(tmp_path / "draft" / "cookbook-cover.pdf", 1, (19.0, 12.75))

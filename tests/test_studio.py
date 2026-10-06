@@ -30,18 +30,18 @@ def root(tmp_path):
     for slug in ("chocolate-cake", "indian-pudding", "strawberry-short-cake"):
         folder = tmp_path / "book" / "recipes" / "desserts" / slug
         folder.mkdir(parents=True)
-        (folder / "recipe.md").write_text(f"# {slug.replace('-', ' ').title()}\n")
+        (folder / "recipe.md").write_text(f"# {slug.replace('-', ' ').title()}\n", encoding="utf-8")
     for slug in ("how-to-combine-ingredients", "how-to-measure"):
         folder = tmp_path / "book" / "sections" / "from-the-cooking-school" / slug
         folder.mkdir(parents=True)
-        (folder / "page.md").write_text(f"# {slug}\n")
+        (folder / "page.md").write_text(f"# {slug}\n", encoding="utf-8")
     root = config.BookRoot(tmp_path)
     config.activate(root)
     return root
 
 
 def lines(root) -> list[str]:
-    return root.config_path.read_text().splitlines()
+    return root.config_path.read_text(encoding="utf-8").splitlines()
 
 
 def test_reordering_chapters_keeps_every_line_and_loads(root):
@@ -67,11 +67,11 @@ def test_reordering_chapters_keeps_every_line_and_loads(root):
 
 
 def test_a_reorder_the_text_cannot_take_leaves_book_yaml_alone(root):
-    root.config_path.write_text("chapters: [{name: a}, {name: b}]  # flow style\n")
-    before = root.config_path.read_text()
+    root.config_path.write_text("chapters: [{name: a}, {name: b}]  # flow style\n", encoding="utf-8")
+    before = root.config_path.read_text(encoding="utf-8")
     with pytest.raises(config.ConfigError):
         studio.reorder_chapters(root, ["b", "a"])
-    assert root.config_path.read_text() == before
+    assert root.config_path.read_text(encoding="utf-8") == before
     with pytest.raises(studio.Problem):
         studio.reorder_chapters(root, ["b", "c"])            # not this book's chapters
 
@@ -95,11 +95,11 @@ def test_reordering_entries_writes_the_shortest_pinned_list(root):
 
 
 def test_a_block_pinned_list_becomes_one_line_and_keeps_its_comments(root):
-    text = root.config_path.read_text().replace(
+    text = root.config_path.read_text(encoding="utf-8").replace(
         '    accent: "#9C4A5E"\n',
         '    accent: "#9C4A5E"\n    pinned:   # the showpieces first\n      - indian-pudding  # her favorite\n'
         "      - chocolate-cake\n")
-    root.config_path.write_text(text)
+    root.config_path.write_text(text, encoding="utf-8")
     studio.pin_entries(root, "desserts", ["chocolate-cake", "strawberry-short-cake", "indian-pudding"])
     assert config.load(root).by_name["desserts"].pinned == ("chocolate-cake", "strawberry-short-cake")
     after = lines(root)
@@ -114,7 +114,7 @@ def test_keepsakes_are_listed_in_extras_md_and_removed_from_it(root):
     extras = root.book / key / "extras"
     s.add_extra(key, "Grandma's Card.PNG", "The original card, about 1950", picture())
     s.add_extra(key, "grandmas-card.png", "  The back of the card  ", picture("JPEG"))
-    assert (extras / "extras.md").read_text() == (
+    assert (extras / "extras.md").read_text(encoding="utf-8") == (
         "# Extras\n\n![The original card, about 1950](grandma-s-card.png)\n"
         "![The back of the card](grandmas-card.jpg)\n")
     s.add_extra(key, "grandma-s-card.png", "A third", picture())
@@ -138,9 +138,9 @@ def test_removing_the_last_keepsake_keeps_the_familys_notes(root):
     extras = root.book / "recipes/desserts/chocolate-cake/extras"
     extras.mkdir()
     (extras / "card.jpg").write_bytes(picture("JPEG"))
-    (extras / "extras.md").write_text("# Extras\n\nAsk Aunt about the 1960 photo.\n\n![The card](card.jpg)\n")
+    (extras / "extras.md").write_text("# Extras\n\nAsk Aunt about the 1960 photo.\n\n![The card](card.jpg)\n", encoding="utf-8")
     studio.Studio(root).remove_extra("recipes/desserts/chocolate-cake", "card.jpg")
-    assert (extras / "extras.md").read_text() == "# Extras\n\nAsk Aunt about the 1960 photo.\n\n"
+    assert (extras / "extras.md").read_text(encoding="utf-8") == "# Extras\n\nAsk Aunt about the 1960 photo.\n\n"
 
 
 @pytest.fixture
@@ -164,7 +164,7 @@ def request(port, method, path, body=None, headers=None):
 def test_file_routes_and_uploads_stay_inside_the_book(root, server):
     (root.path.parent / "outside.jpg").write_bytes(picture("JPEG"))
     (root.draft).mkdir()
-    (root.draft / "cookbook-draft.html").write_text("<p>draft</p>")
+    (root.draft / "cookbook-draft.html").write_text("<p>draft</p>", encoding="utf-8")
     assert request(server, "GET", "/draft/cookbook-draft.html")[0] == 200
     for path in ("/draft/../book/book.yaml", "/draft/..%2fbook%2fbook.yaml", "/book/../../outside.jpg",
                  "/book/%2e%2e/%2e%2e/outside.jpg", "/book/book.yaml", "/file/../../outside.jpg"):

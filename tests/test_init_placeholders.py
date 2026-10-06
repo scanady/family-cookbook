@@ -36,7 +36,7 @@ WRITTEN = {
 def cookbook(*args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
         [sys.executable, "-c", "import sys; from family_cookbook.cli import main; sys.exit(main())", *args],
-        capture_output=True, text=True,
+        capture_output=True, encoding="utf-8",
     )
 
 

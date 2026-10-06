@@ -69,10 +69,12 @@ class Report:
 
 
 def rel(path: Path) -> str:
+    """A book path as lint names it, with forward slashes on every system: the
+    audit report matches these to entries."""
     try:
-        return str(path.relative_to(ROOT))
+        return path.relative_to(ROOT).as_posix()
     except ValueError:
-        return str(path)
+        return path.as_posix()
 
 
 # --------------------------------------------------------------------- entries

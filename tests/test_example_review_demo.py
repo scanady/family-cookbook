@@ -21,7 +21,7 @@ def test_the_example_book_shows_exactly_its_seeded_defects():
     run = subprocess.run(
         [sys.executable, "-c", "import sys; from family_cookbook.cli import main; sys.exit(main(sys.argv[1:]))",
          "audit", "--book", str(EXAMPLE)],
-        capture_output=True, text=True, check=False,
+        capture_output=True, encoding="utf-8", check=False,
     )
     assert run.returncode == 0, run.stdout + run.stderr  # warnings only: CI builds this book
     found = {(m[1].strip(), m[2]) for m in re.finditer(r"^(?:ERROR|WARNING)\s+(.+?)\s{2,}(.+?): ", run.stdout, re.M)}

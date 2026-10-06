@@ -24,7 +24,7 @@ def findings(tmp_path, *, title="Test Cake", ingredients=("2 cups flour", "1 cup
     folder = tmp_path / "recipes" / "desserts" / "test-cake"
     folder.mkdir(parents=True, exist_ok=True)
     md = META.format(title=title, yield_=yield_, cook=cook, temp=temp)
-    (folder / "recipe.md").write_text(md)
+    (folder / "recipe.md").write_text(md, encoding="utf-8")
     r = SimpleNamespace(title=title, folder=folder, ingredients=list(ingredients), directions=list(directions),
                         notes=list(notes), prose=[], original_text=source)
     return [(f.severity, f.check) for f in audit.entry_findings(r, md, estimates)]
@@ -169,7 +169,7 @@ def test_molasses_and_sweetening_are_foods_the_method_uses(tmp_path):
     steps = ("Mix flour and eggs; stir in 1 teaspoon molasses.", "Sweeten to taste and bake 30 minutes at 350°F.")
     src = "Test Cake\n2 cups flour, 2 eggs. Mix, stir in 1 teaspoon molasses. Sweeten to taste, bake 30 minutes at 350°."
     findings(tmp_path, ingredients=("2 cups flour", "2 eggs"), directions=steps, source=src)
-    md = (tmp_path / "recipes" / "desserts" / "test-cake" / "recipe.md").read_text()
+    md = (tmp_path / "recipes" / "desserts" / "test-cake" / "recipe.md").read_text(encoding="utf-8")
     r = SimpleNamespace(title="Test Cake", folder=tmp_path / "recipes" / "desserts" / "test-cake",
                         ingredients=["2 cups flour", "2 eggs"], directions=list(steps), notes=[], prose=[],
                         original_text=src)

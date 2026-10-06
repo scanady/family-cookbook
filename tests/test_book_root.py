@@ -6,7 +6,7 @@ from family_cookbook.config import BookRoot, ConfigError, find_root
 @pytest.fixture
 def book(tmp_path):
     (tmp_path / "book" / "recipes" / "mains").mkdir(parents=True)
-    (tmp_path / "book" / "book.yaml").write_text("book:\n  title: T\n")
+    (tmp_path / "book" / "book.yaml").write_text("book:\n  title: T\n", encoding="utf-8")
     return tmp_path
 
 
