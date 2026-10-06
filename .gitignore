@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+build/
+dist/
+*.egg-info/
+
+# AI model keys (GEMINI_API_KEY): never commit them.
+.env
+.env.*
+!.env.example
+
+# Example books' build output and derived photo crops
+examples/*/draft/
+examples/*/book/recipes/**/*-sidebar.jpg
+examples/*/book/recipes/**/*-spread.jpg

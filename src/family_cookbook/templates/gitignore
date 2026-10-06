@@ -1,0 +1,17 @@
+# Generated build output — rebuild with `cookbook build` and `cookbook cover`.
+# Nothing in draft/ is a source file, and the raw interior PDF runs to hundreds
+# of MB, so none of it belongs in history.
+draft/
+
+# Layout-fitted photo crops — regenerate with `cookbook fit`.
+book/recipes/**/*-sidebar.jpg
+book/recipes/**/*-spread.jpg
+
+# Python
+__pycache__/
+.venv/
+
+# AI model keys (GEMINI_API_KEY) — never commit them. .env.example holds no key.
+.env
+.env.*
+!.env.example

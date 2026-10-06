@@ -1,0 +1,1 @@
+*TODO: the last page of the book. A thank-you, an invitation to add to it, a note to whoever inherits it. Replace this placeholder. No heading: the page takes its name from the chapter's label in book.yaml.*

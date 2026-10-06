@@ -1,0 +1,50 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "family-cookbook"
+version = "1.0.0"
+description = "Build a printed, press-ready family cookbook from markdown recipes."
+readme = "README.md"
+license = "PolyForm-Noncommercial-1.0.0 AND OFL-1.1"
+license-files = ["LICENSE", "src/family_cookbook/fonts/OFL-*.txt"]
+requires-python = ">=3.11"
+authors = [{ name = "Sean Canady" }]
+keywords = ["cookbook", "recipes", "markdown", "print", "pdf", "book", "lulu", "hardcover"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Printing",
+    "Topic :: Text Processing :: Markup :: Markdown",
+]
+dependencies = [
+    "pyyaml>=6",
+    "pillow>=10",
+    "playwright>=1.40",
+]
+
+[project.optional-dependencies]
+ai = ["google-genai>=1.30"]
+test = ["pytest>=8"]
+
+[project.scripts]
+cookbook = "family_cookbook.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/scanady/family-cookbook"
+Source = "https://github.com/scanady/family-cookbook"
+Issues = "https://github.com/scanady/family-cookbook/issues"
+Changelog = "https://github.com/scanady/family-cookbook/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/scanady/family-cookbook#readme"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/family_cookbook"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

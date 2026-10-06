@@ -1,0 +1,7 @@
+# The image needs pyproject.toml, README.md, LICENSE, and src/ only.
+*
+!pyproject.toml
+!README.md
+!LICENSE
+!src/
+**/__pycache__

@@ -1,0 +1,82 @@
+# The cookbook's structure, style, and layout — one declarative source.
+#
+# Read by every command that works on the book's pages: build, cover, fit,
+# lint, audit, index, ingest, photo, review, studio, and press. Adding a
+# chapter is one block here plus the folder; nothing in the engine needs editing.
+#
+# What belongs here: VALUES someone sets — order, labels, colors, file paths,
+# layout assignments. Prose someone WROTE lives in markdown, even one sentence.
+
+book:
+  title: "{title}"
+  subtitle: "{subtitle}"
+  edition: "{edition}"
+
+style:
+  default_accent: "#3F3A34"
+
+# Cover settings only. The back-cover prose is content and lives in
+# book/cover.md — this file holds values, not writing.
+# photo is the front-cover picture, a path relative to book/recipes/, e.g.
+# {{chapter}}/{{slug}}/images/{{slug}}.jpg. Empty prints a cover without one.
+cover:
+  spine_text: "{title} · {subtitle}"
+  accent: "#7E3B3B"
+  photo: ""
+
+# Content checks (`cookbook audit`). estimates: true accepts a Yield or Prep
+# time written "About …" that the recipe's source does not state, as the
+# family's own estimate. Cook time, Temperature, and ingredient amounts are
+# always checked against the source.
+audit:
+  estimates: false
+
+# Chapters, in book order — the list IS the order, front and back matter
+# included. A dedication is a chapter without a divider before the first food
+# chapter; a closing message is one after the last.
+#
+#   kind      recipes -> entries in book/recipes/, prose -> book/sections/,
+#             generated -> built by the renderer, no folder (see below)
+#   divider   false for a chapter that opens with no divider page
+#   toc       false to leave a chapter out of the table of contents
+#   pinned    entry slugs held at the FRONT of the chapter, in the order given;
+#             anything unpinned follows alphabetically after them. It holds
+#             entries at the front only — there is no way to pin one last.
+#
+# Generated chapters are built from this file and the finished page order:
+# title-page, table-of-contents, contributors, index. Position is where each
+# prints, `label` is its heading; never author one as markdown.
+chapters:
+  # Each matter page is its own chapter, so this list is literally the page
+  # order. The `matter-` prefix only groups them in a folder listing.
+  - name: title-page
+    kind: generated
+    label: "Title Page"
+    toc: false
+  - name: matter-dedication
+    kind: prose
+    label: "Dedication"
+    divider: false
+  - name: table-of-contents
+    kind: generated
+    label: "Contents"
+    toc: false
+
+{chapters}
+  - name: matter-closing-message
+    kind: prose
+    label: "Closing Message"
+    divider: false
+  - name: contributors
+    kind: generated
+    label: "Contributors"
+  # Optional A–Z index of dishes and cooks; uncomment to print it last.
+  # - name: index
+  #   kind: generated
+  #   label: "Index"
+# Curated layout assignments, keyed on (chapter, slug). Any entry can take one —
+# a recipe or a prose page in its chapter's folder. One-page chapters (the
+# dedication, the closing message) and chapter openers are laid out by the
+# engine and take no row. Anything not listed is auto-assigned by
+# `cookbook build`, which rotates archetypes for variety.
+layouts: []

@@ -1,0 +1,1 @@
+*TODO: one line of family voice opening this chapter — what these pages tell, who wrote them down, why they belong in the book. Replace this placeholder, or delete the file; the chapter still opens with its name from book.yaml, just without a message. No heading here: the name comes from the chapter's label.*

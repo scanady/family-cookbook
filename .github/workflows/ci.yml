@@ -1,0 +1,98 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install the engine
+        run: pip install -e ".[test]"
+
+      - name: Install Chromium, Ghostscript, and poppler
+        run: |
+          python -m playwright install --with-deps chromium
+          sudo apt-get install -y ghostscript poppler-utils
+
+      - name: Tests
+        run: python -m pytest
+
+      - name: Build every example book in print mode
+        run: |
+          shopt -s nullglob
+          for book in examples/*/; do
+            echo "::group::$book"
+            cookbook lint --book "$book"
+            cookbook index --check --book "$book"
+            cookbook fit --book "$book"
+            cookbook build --print --book "$book"
+            cookbook check --book "$book"
+            cookbook audit --book "$book"
+            cookbook cover --book "$book"
+            echo "::endgroup::"
+          done
+
+      # A brand-new book, a few recipes, a clean press run, no engine edits.
+      - name: A new book prints with no engine edits
+        run: |
+          book="$RUNNER_TEMP/new-book"
+          cookbook init --book "$book" --categories mains,desserts \
+            --title "Test Kitchen" --subtitle "A Two-Recipe Book"
+          mkdir -p "$book/book/recipes/mains/skillet-cornbread" "$book/book/recipes/desserts/baked-apples"
+          cat > "$book/book/recipes/mains/skillet-cornbread/recipe.md" <<'EOF'
+          # Skillet Cornbread
+
+          *Ruth Baker*
+
+          ## Ingredients
+
+          - 1 cup cornmeal
+          - 1 cup flour
+          - 1 cup buttermilk
+          - 1 egg
+          - 2 tablespoons butter
+
+          ## Directions
+
+          1. Heat the oven to 425°F with the butter in a cast-iron skillet.
+          2. Stir the rest together and pour it into the hot skillet.
+          3. Bake until golden, about 20 minutes.
+          EOF
+          cat > "$book/book/recipes/desserts/baked-apples/recipe.md" <<'EOF'
+          # Baked Apples
+
+          *Tom Baker*
+
+          ## Ingredients
+
+          - 4 apples, cored
+          - 1/4 cup brown sugar
+          - 1 teaspoon cinnamon
+
+          ## Directions
+
+          1. Fill the apples with the sugar and cinnamon.
+          2. Bake at 350°F until tender, about 40 minutes.
+          EOF
+          # init's placeholders are lint errors until the pages are written.
+          if cookbook lint --book "$book"; then echo "lint passed init's placeholders" >&2; exit 1; fi
+          printf '*For everyone who ever asked for the recipe.*\n' > "$book/book/sections/matter-dedication/page.md"
+          printf '*Add your own on the blank pages.*\n' > "$book/book/sections/matter-closing-message/page.md"
+          printf '*Supper, most nights.*\n' > "$book/book/sections/mains/page.md"
+          printf '*Sunday afternoons.*\n' > "$book/book/sections/desserts/page.md"
+          printf '# Back Cover\n\nTwo recipes from the Baker kitchen.\n\n*The Bakers*\n' > "$book/book/cover.md"
+          cookbook lint --book "$book"
+          cookbook press --book "$book"
+          test -s "$book/draft/cookbook-interior-press.pdf"
+          test -s "$book/draft/cookbook-cover.pdf"

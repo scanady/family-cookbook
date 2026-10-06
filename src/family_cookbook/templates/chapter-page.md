@@ -1,0 +1,1 @@
+*TODO: one line of family voice opening this chapter — what these recipes have in common, who cooked them, when they get made. Replace this placeholder, or delete the file; the chapter still opens with its name from book.yaml, just without a message. No heading here: the name comes from the chapter's label.*

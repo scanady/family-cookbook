@@ -1,0 +1,1 @@
+*TODO: who this book is for, and why. This is one of the few pages people will actually stop and read — replace this placeholder before the book is printed. No heading: the page takes its name from the chapter's label in book.yaml.*
