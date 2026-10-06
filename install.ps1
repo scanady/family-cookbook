@@ -88,8 +88,19 @@ if (-not (Find-Ghostscript)) {
         $asset = $release.assets | Where-Object { $_.name -match '^gs\d+w64\.exe$' } | Select-Object -First 1
         $setup = Join-Path $env:TEMP $asset.name
         Invoke-WebRequest $asset.browser_download_url -OutFile $setup
-        Start-Process -FilePath $setup -ArgumentList '/S' -Verb RunAs -Wait
+        # Ask Windows for permission only when this window does not already
+        # have it; where no one can answer the prompt, the request would wait forever.
+        $admin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole(
+            [Security.Principal.WindowsBuiltInRole]::Administrator)
+        $start = @{ FilePath = $setup; ArgumentList = '/S'; PassThru = $true }
+        if (-not $admin) { $start.Verb = 'RunAs' }
+        $setupProcess = Start-Process @start
+        if (-not $setupProcess.WaitForExit(300000)) {
+            $setupProcess.Kill()
+            throw 'the Ghostscript installer did not finish within 5 minutes'
+        }
         Remove-Item $setup -ErrorAction SilentlyContinue
+        if (-not (Find-Ghostscript)) { throw "the Ghostscript installer ended (exit $($setupProcess.ExitCode)) without installing it" }
     } catch {
         Write-Warning "Ghostscript was not installed ($($_.Exception.Message)). The book still builds; to print it, install Ghostscript from https://ghostscript.com/releases/gsdnld.html"
     }
