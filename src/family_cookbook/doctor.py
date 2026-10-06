@@ -41,8 +41,8 @@ def main(root: config.BookRoot | None) -> int:
         (bool(shutil.which("pdftoppm")), False, "poppler, which reads PDF files for cookbook ingest",
          _install("poppler-utils", "poppler")),
         (bool(ai), False, f"AI, through {ai}" if ai else "AI: no key (without one, ingest and photo work by hand)",
-         "paste a Gemini key (https://aistudio.google.com/apikey) after GEMINI_API_KEY=, or an OpenRouter key "
-         "(https://openrouter.ai/keys) after OPENROUTER_API_KEY=, in the book's .env"),
+         "paste an OpenRouter key (https://openrouter.ai/keys) after OPENROUTER_API_KEY=, or a Gemini key "
+         "(https://aistudio.google.com/apikey) after GEMINI_API_KEY=, in the book's .env"),
         (root is not None, False, f"the book: {root.path}" if root else "a book in this folder",
          "cookbook init"),
     ]

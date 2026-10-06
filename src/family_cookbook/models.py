@@ -129,9 +129,9 @@ def service() -> str | None:
 
 
 # What every AI command says when there is no key, before it carries on without AI.
-NO_KEY = ("AI is off: no AI key. In the book's .env file, paste a Gemini key "
-          "(https://aistudio.google.com/apikey) after GEMINI_API_KEY=, or an OpenRouter key "
-          "(https://openrouter.ai/keys) after OPENROUTER_API_KEY=.")
+NO_KEY = ("AI is off: no AI key. In the book's .env file, paste an OpenRouter key "
+          "(https://openrouter.ai/keys) after OPENROUTER_API_KEY=, or a Gemini key "
+          "(https://aistudio.google.com/apikey) after GEMINI_API_KEY=.")
 
 
 class Gemini:

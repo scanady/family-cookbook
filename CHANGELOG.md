@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.2.1
+
+- `install.sh` asks which AI service to use, OpenRouter (recommended), Google
+  AI Studio, or none, then asks for that service's key. It warns when an
+  OpenRouter key does not start `sk-or-`.
+- The "AI is off" message, `cookbook doctor`, the new book's `.env`, and the
+  README list OpenRouter first.
+
 ## 1.2.0
 
 - **OpenRouter.** `OPENROUTER_API_KEY` in the book's `.env` turns AI on

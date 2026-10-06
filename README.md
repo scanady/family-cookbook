@@ -22,10 +22,11 @@ curl -fsSL https://raw.githubusercontent.com/scanady/family-cookbook/main/instal
 ```
 
 This makes the folder `our-cookbook`, installs the engine and the browser it
-lays out pages with (about 700 MB), starts the book, and asks for a Gemini API
-key for the AI features. Press Enter to skip the key: everything still works,
-and the typing is yours. It ends with `cookbook doctor`, which names anything
-missing and the command that installs it. Printing also needs Ghostscript
+lays out pages with (about 700 MB), and starts the book. It then asks which AI
+service to use, OpenRouter (recommended) or Google AI Studio, and for its key.
+Skip it and everything still works, and the typing is yours. It ends with
+`cookbook doctor`, which names anything missing and the command that installs
+it. Printing also needs Ghostscript
 (`sudo apt install ghostscript` or `brew install ghostscript`).
 
 ## Make the book
@@ -73,11 +74,11 @@ From the book's folder (`cd our-cookbook`):
 
 ## AI
 
-AI is on when the book's `.env` file has a key: paste a Gemini key from
-[Google AI Studio](https://aistudio.google.com/apikey) after `GEMINI_API_KEY=`,
-or an [OpenRouter](https://openrouter.ai/keys) key after `OPENROUTER_API_KEY=`.
-Both reach the same Gemini models; OpenRouter runs on prepaid credits, with no
-Google billing to set up.
+AI is on when the book's `.env` file has a key: paste an
+[OpenRouter](https://openrouter.ai/keys) key after `OPENROUTER_API_KEY=`
+(recommended: prepaid credits, no Google billing to set up), or a Gemini key from
+[Google AI Studio](https://aistudio.google.com/apikey) after `GEMINI_API_KEY=`.
+Both reach the same Gemini models.
 
 Without a key, each AI command says so and carries on by hand: `ingest` files
 the card's pages as a recipe for you to type up in the studio, and `photo`

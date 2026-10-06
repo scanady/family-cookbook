@@ -1,10 +1,10 @@
 # The key for the AI features: reading photos of recipe cards (cookbook ingest)
 # and making dish photos (cookbook photo). Paste one key after its = below:
-#   a Gemini key from https://aistudio.google.com/apikey, or
-#   an OpenRouter key from https://openrouter.ai/keys (the same Gemini models).
+#   an OpenRouter key from https://openrouter.ai/keys (recommended), or
+#   a Gemini key from https://aistudio.google.com/apikey (the same Gemini models).
 # With both, Gemini is used. Without either, the cookbook command still works:
 # it warns and does the rest by hand.
 #
 # Git never commits this file (.gitignore). A key already set in your shell wins.
-GEMINI_API_KEY=
 OPENROUTER_API_KEY=
+GEMINI_API_KEY=

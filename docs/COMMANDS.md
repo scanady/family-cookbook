@@ -133,7 +133,7 @@ newer and Ghostscript (`sudo apt install ghostscript` or
 mkdir our-cookbook && cd our-cookbook
 python3 -m venv .venv
 . .venv/bin/activate
-pip install "git+https://github.com/scanady/family-cookbook@v1.2.0"
+pip install "git+https://github.com/scanady/family-cookbook@v1.2.1"
 python -m playwright install chromium
 cookbook init --title "Our Family Cookbook" --subtitle "The Smith Family"
 cookbook doctor

@@ -9,7 +9,7 @@
 # somewhere else (a local clone, say).
 set -euo pipefail
 
-VERSION="${COOKBOOK_VERSION:-v1.2.0}"
+VERSION="${COOKBOOK_VERSION:-v1.2.1}"
 PACKAGE="${COOKBOOK_PACKAGE:-family-cookbook @ git+https://github.com/scanady/family-cookbook@$VERSION}"
 DIR="${1:-our-cookbook}"
 
@@ -75,17 +75,32 @@ fi
 if [ -z "${GEMINI_API_KEY:-}${GOOGLE_API_KEY:-}${OPENROUTER_API_KEY:-}" ] &&
    ! grep -Eq '^(GEMINI|OPENROUTER)_API_KEY=.+' .env 2>/dev/null; then
   say "AI (optional): it types up photos of recipe cards and makes dish photos"
-  echo "Use a Gemini key (https://aistudio.google.com/apikey) or an OpenRouter key (https://openrouter.ai/keys)."
-  ask key "Paste the key (Enter to skip)"
-  if [ -n "$key" ]; then
-    # OpenRouter keys start sk-or-; anything else is taken as a Gemini key.
-    case "$key" in sk-or-*) var=OPENROUTER_API_KEY ;; *) var=GEMINI_API_KEY ;; esac
-    touch .env
-    grep -v "^$var=" .env >.env.new || true
-    printf '%s=%s\n' "$var" "$key" >>.env.new
-    mv .env.new .env
-    chmod 600 .env
-    echo "Saved to .env as $var."
+  echo "  1) OpenRouter (recommended): prepaid credits, no Google billing to set up"
+  echo "  2) Google AI Studio: a Gemini API key"
+  echo "  3) Skip: no AI for now; add a key to .env later"
+  while :; do
+    ask choice "Which one" "1"
+    case "$choice" in
+      1) var=OPENROUTER_API_KEY url=https://openrouter.ai/keys prefix=sk-or- ;;
+      2) var=GEMINI_API_KEY url=https://aistudio.google.com/apikey prefix= ;;
+      3) var= ;;
+      *) echo "Type 1, 2, or 3."; continue ;;
+    esac
+    break
+  done
+  if [ -n "$var" ]; then
+    ask key "Paste your key from $url (Enter to skip)"
+    if [ -n "$key" ]; then
+      if [ -n "$prefix" ] && [ "${key#"$prefix"}" = "$key" ]; then
+        echo "That does not look like an OpenRouter key (they start $prefix); saving it anyway."
+      fi
+      touch .env
+      grep -v "^$var=" .env >.env.new || true
+      printf '%s=%s\n' "$var" "$key" >>.env.new
+      mv .env.new .env
+      chmod 600 .env
+      echo "Saved to .env as $var."
+    fi
   fi
 fi
 
