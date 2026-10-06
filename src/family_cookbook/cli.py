@@ -47,7 +47,7 @@ def cmd_init(args: argparse.Namespace) -> int:
           "  cookbook ingest card.jpg     add a recipe from a photo or scan of the card\n"
           "  cookbook lint                list the TODO lines that are yours to write\n"
           "  cookbook press               make the two PDFs for the printer")
-    if not models.api_key():
+    if not models.service():
         print(f"\n{models.NO_KEY}", file=sys.stderr)
     return 0
 
@@ -258,7 +258,8 @@ def parser() -> argparse.ArgumentParser:
     sp.add_argument("--title", default="",
                     help="without AI: the recipe's title (default: from the first file's name)")
     sp.add_argument("--model", default=models.DEFAULT_MODEL, metavar="MODEL",
-                    help=f"the model to read with (default: {models.DEFAULT_MODEL})")
+                    help=f"the model to read with: a Gemini model, or an OpenRouter id such as "
+                         f"vendor/model (default: {models.DEFAULT_MODEL})")
     sp.add_argument("--dry-run", action="store_true",
                     help="print what would be written, write nothing (the model is still called)")
 
@@ -274,9 +275,11 @@ def parser() -> argparse.ArgumentParser:
     sp.add_argument("--prompt-only", action="store_true",
                     help="write the prompt file and stop, to edit it before any image is made")
     sp.add_argument("--model", default=models.DEFAULT_MODEL, metavar="MODEL",
-                    help=f"the model that writes the prompt and inspects each image (default: {models.DEFAULT_MODEL})")
+                    help=f"the model that writes the prompt and inspects each image: a Gemini model, or an "
+                         f"OpenRouter id (default: {models.DEFAULT_MODEL})")
     sp.add_argument("--image-model", default=models.DEFAULT_IMAGE_MODEL, metavar="MODEL",
-                    help=f"the model that draws the photo (default: {models.DEFAULT_IMAGE_MODEL})")
+                    help=f"the model that draws the photo: a Gemini model, or an OpenRouter id "
+                         f"(default: {models.DEFAULT_IMAGE_MODEL})")
 
     sp = add("Write and review", "review", cmd_review,
              "check typed-up recipes against the original cards in your browser, correcting "

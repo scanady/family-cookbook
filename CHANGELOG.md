@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0
+
+- **OpenRouter.** `OPENROUTER_API_KEY` in the book's `.env` turns AI on
+  without a Google account: `ingest` and `photo` reach the same Gemini models
+  through OpenRouter, paid from prepaid credits. With both keys, Gemini is
+  used. `--model` and `--image-model` also take any OpenRouter model id
+  (`vendor/model`). The cost OpenRouter reports goes to the AI log.
+- `install.sh` takes either key and saves it under the right name;
+  `cookbook init` writes both lines into `.env`; `cookbook doctor` names the
+  service in use.
+
 ## 1.1.0
 
 Getting started takes one command, and AI is on by default.

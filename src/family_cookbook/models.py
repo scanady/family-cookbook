@@ -1,21 +1,25 @@
 """The AI models behind `cookbook ingest` and `cookbook photo`, behind one interface.
 
 A command asks for a model by name (`--model`), gets an object with `json()`
-(and, for an image model, `image()`), and never touches a provider SDK. Adding
-a provider is one class here and one entry in PROVIDERS; nothing else in the
-engine changes.
+(and, for an image model, `image()`), and never touches a provider's API.
+Two services reach the models: Google's Gemini API (GEMINI_API_KEY) and
+OpenRouter (OPENROUTER_API_KEY), which serves the same Gemini models and many
+others. `load()` picks the service from the model name and the keys set.
 
-Every call returns its token usage and, for a model in PRICES, its cost. The
-commands append what each recipe cost to book/sources/ai-log.jsonl, so a
-book's AI spend is on record.
+Every call returns its token usage and its cost: OpenRouter reports it, and a
+Gemini model in PRICES is priced here. The commands append what each recipe
+cost to book/sources/ai-log.jsonl, so a book's AI spend is on record.
 """
 from __future__ import annotations
 
+import base64
 import datetime as dt
 import json
 import mimetypes
 import os
 import time
+import urllib.error
+import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol, Sequence
@@ -104,15 +108,30 @@ def cost(model: str, input_tokens: int, output_tokens: int, image_tokens: int = 
     return usd / 1_000_000
 
 
-def api_key() -> str | None:
-    """The Gemini key from the environment, which the CLI fills from the book's
-    .env (config.load_env). GEMINI_API_KEY or GOOGLE_API_KEY, as the SDK reads."""
+def gemini_key() -> str | None:
+    """GEMINI_API_KEY or GOOGLE_API_KEY, as the SDK reads them. The CLI fills
+    the environment from the book's .env first (config.load_env)."""
     return os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY") or None
 
 
+def openrouter_key() -> str | None:
+    return os.environ.get("OPENROUTER_API_KEY") or None
+
+
+def service() -> str | None:
+    """The service a Gemini model name goes to: Google when its key is set,
+    else OpenRouter when that key is; None when AI is off."""
+    if gemini_key():
+        return "Gemini"
+    if openrouter_key():
+        return "OpenRouter"
+    return None
+
+
 # What every AI command says when there is no key, before it carries on without AI.
-NO_KEY = ("AI is off: no Gemini API key. Get one at https://aistudio.google.com/apikey and paste it "
-          "after GEMINI_API_KEY= in the book's .env file.")
+NO_KEY = ("AI is off: no AI key. In the book's .env file, paste a Gemini key "
+          "(https://aistudio.google.com/apikey) after GEMINI_API_KEY=, or an OpenRouter key "
+          "(https://openrouter.ai/keys) after OPENROUTER_API_KEY=.")
 
 
 class Gemini:
@@ -121,7 +140,7 @@ class Gemini:
     def __init__(self, name: str) -> None:
         from google import genai
 
-        key = api_key()
+        key = gemini_key()
         if not key:
             raise SystemExit(NO_KEY)
         self.name = name
@@ -187,13 +206,112 @@ class Gemini:
         return data, usage
 
 
-# Model-name prefix -> provider class.
-PROVIDERS: dict[str, type] = {"gemini-": Gemini}
+OPENROUTER_API = "https://openrouter.ai/api/v1"
+OPENROUTER_TIMEOUT_S = 300   # a 4K image takes a minute or two
+OPENROUTER_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+OPENROUTER_TRANSIENT = {408, 429, 500, 502, 503, 504, 529}
+
+
+class OpenRouter:
+    """Any model on OpenRouter (https://openrouter.ai) through its HTTP API.
+    `name` is OpenRouter's model id, such as google/gemini-3.8-flash."""
+
+    def __init__(self, name: str) -> None:
+        key = openrouter_key()
+        if not key:
+            raise SystemExit(f"{name} is an OpenRouter model: paste an OpenRouter key "
+                             "(https://openrouter.ai/keys) after OPENROUTER_API_KEY= in the book's .env file")
+        self.name = name
+        self._key = key
+
+    def _post(self, path: str, body: dict) -> dict:
+        request = urllib.request.Request(
+            OPENROUTER_API + path, data=json.dumps(body).encode(), method="POST",
+            headers={"Authorization": f"Bearer {self._key}", "Content-Type": "application/json",
+                     "HTTP-Referer": "https://github.com/scanady/family-cookbook", "X-Title": "family-cookbook"})
+        wait = RETRY_WAIT_S
+        for attempt in range(RETRIES + 1):
+            try:
+                with urllib.request.urlopen(request, timeout=OPENROUTER_TIMEOUT_S) as response:
+                    data = json.load(response)
+                error = data.get("error")
+                if not error:
+                    return data
+                code, message = error.get("code"), error.get("message", "")
+            except urllib.error.HTTPError as exc:
+                try:
+                    error = json.load(exc).get("error") or {}
+                except ValueError:
+                    error = {}
+                code, message = exc.code, error.get("message") or exc.reason
+            except (urllib.error.URLError, TimeoutError) as exc:
+                code, message = None, str(getattr(exc, "reason", exc))
+            if (code is None or code in OPENROUTER_TRANSIENT) and attempt < RETRIES:
+                time.sleep(wait)
+                wait *= 2
+                continue
+            if code == 401:
+                raise SystemExit("the OpenRouter API key was rejected as not valid — check OPENROUTER_API_KEY "
+                                 "in the book's .env file or your environment (keys: https://openrouter.ai/keys)")
+            if code == 402:
+                raise SystemExit("OpenRouter has no credits left on this key: add some at "
+                                 "https://openrouter.ai/settings/credits")
+            raise SystemExit(f"{self.name}: {code or 'no connection'}: {message}")
+
+    def _usage(self, data: dict) -> Usage:
+        u = data.get("usage") or {}
+        tokens_in, tokens_out = u.get("prompt_tokens") or 0, u.get("completion_tokens") or 0
+        reported = u.get("cost")
+        price = cost(self.name.removeprefix("google/"), tokens_in, tokens_out)
+        return Usage(tokens_in, tokens_out, float(reported) if reported is not None else price)
+
+    def json(self, prompt: str, schema: dict, images: Sequence[Path] = ()) -> tuple[dict, Usage]:
+        content: list[dict] = []
+        for i, image in enumerate(images, 1):
+            mime = mimetypes.guess_type(image.name)[0] or "image/jpeg"
+            if mime not in OPENROUTER_IMAGE_TYPES:
+                raise SystemExit(f"{image.name}: OpenRouter reads JPEG, PNG, WebP, and GIF pictures only — "
+                                 "save it as a JPEG, or use a Gemini key")
+            url = f"data:{mime};base64,{base64.b64encode(image.read_bytes()).decode()}"
+            content += [{"type": "text", "text": f"Page {i}:"}, {"type": "image_url", "image_url": {"url": url}}]
+        content.append({"type": "text", "text": prompt})
+        data = self._post("/chat/completions", {
+            "model": self.name,
+            "messages": [{"role": "user", "content": content}],
+            "response_format": {"type": "json_schema",
+                                "json_schema": {"name": "answer", "strict": True, "schema": schema}},
+            "temperature": 0,
+            # Only an endpoint that honors response_format: the answer must match the schema.
+            "provider": {"require_parameters": True},
+        })
+        choice = (data.get("choices") or [{}])[0]
+        text = (choice.get("message") or {}).get("content")
+        if not text:
+            raise Refused(f"{self.name} returned no answer ({choice.get('finish_reason') or 'no choices'})")
+        return json.loads(text), self._usage(data)
+
+    def image(self, prompt: str, aspect_ratio: str, size: str) -> tuple[bytes, Usage]:
+        body: dict = {"model": self.name, "prompt": prompt, "aspect_ratio": aspect_ratio, "resolution": size}
+        if self.name.startswith("google/") and size == "4K":
+            # Google AI Studio draws Gemini images at 4K; Vertex, OpenRouter's
+            # other route, stops at 2K, which prints soft.
+            body["provider"] = {"only": ["google-ai-studio"], "allow_fallbacks": False}
+        data = self._post("/images", body)
+        drawn = (data.get("data") or [{}])[0].get("b64_json")
+        if not drawn:
+            raise SystemExit(f"{self.name} returned no image")
+        return base64.b64decode(drawn), self._usage(data)
 
 
 def load(name: str) -> Model:
-    for prefix, provider in PROVIDERS.items():
-        if name.startswith(prefix):
-            return provider(name)
-    known = ", ".join(f"{p}*" for p in PROVIDERS)
-    raise SystemExit(f"no provider for model {name!r} — supported: {known}")
+    """A model by name. An OpenRouter id ("vendor/model") goes to OpenRouter. A
+    Gemini name ("gemini-3.8-flash") goes to Google when GEMINI_API_KEY is set,
+    else to OpenRouter as google/<name>, the same model."""
+    if "/" in name:
+        return OpenRouter(name)
+    if not name.startswith("gemini-"):
+        raise SystemExit(f"no service for model {name!r}: use a Gemini model (gemini-…) "
+                         "or an OpenRouter model id (vendor/model)")
+    if service() == "OpenRouter":
+        return OpenRouter(f"google/{name}")
+    return Gemini(name)

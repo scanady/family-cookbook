@@ -12,11 +12,16 @@ Chromium needs too, and asks for your password.
 poppler (for `cookbook ingest` on PDFs): `sudo apt install ghostscript
 poppler-utils` or `brew install ghostscript poppler`.
 
-**`AI is off: no Gemini API key`.** Get a key at
-[Google AI Studio](https://aistudio.google.com/apikey) and paste it after
-`GEMINI_API_KEY=` in the `.env` file in the book's folder. Until then, `ingest`
-files the pages for you to type up and `photo` makes nothing; see
+**`AI is off: no AI key`.** Paste a Gemini key from
+[Google AI Studio](https://aistudio.google.com/apikey) after `GEMINI_API_KEY=`,
+or an OpenRouter key from [openrouter.ai/keys](https://openrouter.ai/keys) after
+`OPENROUTER_API_KEY=`, in the `.env` file in the book's folder. Until then,
+`ingest` files the pages for you to type up and `photo` makes nothing; see
 [COMMANDS.md](COMMANDS.md#ai-what-it-does-without-a-key).
+
+**`OpenRouter has no credits left on this key`.** Add credits at
+[openrouter.ai/settings/credits](https://openrouter.ai/settings/credits), then
+run the command again.
 
 **`no book/book.yaml in … or any folder above it`.** Run the command inside the
 book's folder or a folder inside it, pass `--book PATH` with the book's folder,

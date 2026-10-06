@@ -9,7 +9,7 @@
 # somewhere else (a local clone, say).
 set -euo pipefail
 
-VERSION="${COOKBOOK_VERSION:-v1.1.0}"
+VERSION="${COOKBOOK_VERSION:-v1.2.0}"
 PACKAGE="${COOKBOOK_PACKAGE:-family-cookbook @ git+https://github.com/scanady/family-cookbook@$VERSION}"
 DIR="${1:-our-cookbook}"
 
@@ -72,16 +72,20 @@ else
   echo "Created book/. Its chapters, their order, and colors are in book/book.yaml."
 fi
 
-if [ -z "${GEMINI_API_KEY:-}${GOOGLE_API_KEY:-}" ] && ! grep -Eq '^GEMINI_API_KEY=.+' .env 2>/dev/null; then
+if [ -z "${GEMINI_API_KEY:-}${GOOGLE_API_KEY:-}${OPENROUTER_API_KEY:-}" ] &&
+   ! grep -Eq '^(GEMINI|OPENROUTER)_API_KEY=.+' .env 2>/dev/null; then
   say "AI (optional): it types up photos of recipe cards and makes dish photos"
-  ask key "Paste a Gemini API key from https://aistudio.google.com/apikey (Enter to skip)"
+  echo "Use a Gemini key (https://aistudio.google.com/apikey) or an OpenRouter key (https://openrouter.ai/keys)."
+  ask key "Paste the key (Enter to skip)"
   if [ -n "$key" ]; then
+    # OpenRouter keys start sk-or-; anything else is taken as a Gemini key.
+    case "$key" in sk-or-*) var=OPENROUTER_API_KEY ;; *) var=GEMINI_API_KEY ;; esac
     touch .env
-    grep -v '^GEMINI_API_KEY=' .env >.env.new || true
-    printf 'GEMINI_API_KEY=%s\n' "$key" >>.env.new
+    grep -v "^$var=" .env >.env.new || true
+    printf '%s=%s\n' "$var" "$key" >>.env.new
     mv .env.new .env
     chmod 600 .env
-    echo "Saved to .env."
+    echo "Saved to .env as $var."
   fi
 fi
 

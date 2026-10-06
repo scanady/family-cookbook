@@ -560,7 +560,7 @@ def main(root: config.BookRoot, paths: list[Path], *, page_spec: str = "", chapt
     lookup = {key.casefold(): c for c in chapters for key in (c.name, c.label)}
     if chapter and chapter.casefold() not in lookup:
         raise SystemExit(f"--chapter {chapter!r} is not a recipe chapter: {', '.join(c.name for c in chapters)}")
-    if not models.api_key():
+    if not models.service():
         print(models.NO_KEY, file=sys.stderr)
         return by_hand(root, paths, page_spec=page_spec, chapter=lookup[chapter.casefold()] if chapter else None,
                        chapters=chapters, cook=cook, title=title, dry_run=dry_run)

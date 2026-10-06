@@ -47,8 +47,9 @@ notes describe the method, not the book it was measured on.
   run on a real book: tune it until the remaining findings are real.
 - `ingest.py`, `photo.py`, `review.py` — the AI intake commands: transcribe
   cards, generate dish photos, review against the originals. `models.py` puts
-  the AI providers behind one interface (`GEMINI_API_KEY`, from the book's
-  `.env`) and logs cost to `book/sources/ai-log.jsonl`. With no key, `ingest`
+  the AI services behind one interface (`GEMINI_API_KEY` for Google's API,
+  else `OPENROUTER_API_KEY` for the same models through OpenRouter, from the
+  book's `.env`) and logs cost to `book/sources/ai-log.jsonl`. With no key, `ingest`
   and `photo` print `models.NO_KEY` and carry on without AI; nothing else needs
   a key. Their prompts load the rules from the agent files, so a rule changes
   in one place. Tests use stand-in models; never call a real model from `tests/`.

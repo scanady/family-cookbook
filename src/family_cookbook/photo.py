@@ -282,7 +282,7 @@ def main(root: config.BookRoot, slugs: list[str], *, attempts: int = 3, new_prom
     missing = [s for s in slugs if s not in recipes]
     if missing:
         raise SystemExit(f"no recipe with slug {', '.join(missing)} in book/recipes/")
-    if not models.api_key():
+    if not models.service():
         print(models.NO_KEY, file=sys.stderr)
         print("No photo made: the recipe prints without one.")
         return 0
@@ -300,7 +300,7 @@ def main(root: config.BookRoot, slugs: list[str], *, attempts: int = 3, new_prom
         total += spent
         models.log(root.book, {
             "command": "photo", "entry": f"recipes/{r.category}/{slug}", "accepted": ok,
-            "model": image_model_name if image_model else model_name, **spent.record(),
+            "model": (image_model or text_model).name, **spent.record(),
         })
         print(f"  {'$' + format(spent.cost_usd, '.3f') if spent.cost_usd is not None else 'cost unknown'}")
 

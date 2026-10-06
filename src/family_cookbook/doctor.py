@@ -31,6 +31,7 @@ def chromium_problem() -> str | None:
 
 def main(root: config.BookRoot | None) -> int:
     chromium = chromium_problem()
+    ai = models.service()
     # (ok, required, what it is, the fix)
     checks = [
         (chromium is None, True, "Chromium, which lays out the pages" + (f" ({chromium})" if chromium else ""),
@@ -39,8 +40,9 @@ def main(root: config.BookRoot | None) -> int:
          _install("ghostscript", "ghostscript")),
         (bool(shutil.which("pdftoppm")), False, "poppler, which reads PDF files for cookbook ingest",
          _install("poppler-utils", "poppler")),
-        (bool(models.api_key()), False, "AI: a Gemini API key (without one, ingest and photo work by hand)",
-         "get a key at https://aistudio.google.com/apikey and paste it after GEMINI_API_KEY= in the book's .env"),
+        (bool(ai), False, f"AI, through {ai}" if ai else "AI: no key (without one, ingest and photo work by hand)",
+         "paste a Gemini key (https://aistudio.google.com/apikey) after GEMINI_API_KEY=, or an OpenRouter key "
+         "(https://openrouter.ai/keys) after OPENROUTER_API_KEY=, in the book's .env"),
         (root is not None, False, f"the book: {root.path}" if root else "a book in this folder",
          "cookbook init"),
     ]

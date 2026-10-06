@@ -36,7 +36,7 @@ cookbook photo {slug} --prompt-only  # write prompts/{slug}-image-prompt.md and 
 cookbook photo {slug} --new-prompt   # replace an existing prompt
 ```
 
-It needs `GEMINI_API_KEY`. It fills in the template below from `recipe.md`, generates at 4K, cuts the 8:11 master, and accepts a candidate only when the build's own photo rules give it a layout and a vision check finds no text, extra dish, cut-off vessel, or recipe mismatch. A rejected candidate is followed by one with a measured correction. Candidates stay in `draft/photos/{slug}/`.
+It needs `GEMINI_API_KEY` or `OPENROUTER_API_KEY` in the book's `.env`. It fills in the template below from `recipe.md`, generates at 4K, cuts the 8:11 master, and accepts a candidate only when the build's own photo rules give it a layout and a vision check finds no text, extra dish, cut-off vessel, or recipe mismatch. A rejected candidate is followed by one with a measured correction. Candidates stay in `draft/photos/{slug}/`.
 
 Then do Step 7 and look at the page: the vision check is a first reviewer, not the last. When the command gives up, pick from the candidates by eye or tune the prompt and run it again.
 

@@ -53,6 +53,10 @@ From the book's folder (`cd our-cookbook`):
    will be bound. **Chapters** reorders chapters and recipes; **Photos &
    keepsakes** adds card scans and family photos.
 
+   ![The studio's Book tab showing the Boston Baked Beans spread: a full-page photo of the bean pot on the left, the recipe with ingredients, directions, and notes on the right](docs/images/studio-book.webp)
+
+   *The studio's Book tab, open at a two-page spread from the example book.*
+
 3. **Write the personal pages.** The dedication, each chapter's opening
    message, the closing message, and the back cover start as `TODO` lines in
    `book/`. The studio's **Report** tab lists each one; replace it with your
@@ -69,8 +73,12 @@ From the book's folder (`cd our-cookbook`):
 
 ## AI
 
-AI is on when the book's `.env` file has a key: paste one from
-[Google AI Studio](https://aistudio.google.com/apikey) after `GEMINI_API_KEY=`.
+AI is on when the book's `.env` file has a key: paste a Gemini key from
+[Google AI Studio](https://aistudio.google.com/apikey) after `GEMINI_API_KEY=`,
+or an [OpenRouter](https://openrouter.ai/keys) key after `OPENROUTER_API_KEY=`.
+Both reach the same Gemini models; OpenRouter runs on prepaid credits, with no
+Google billing to set up.
+
 Without a key, each AI command says so and carries on by hand: `ingest` files
 the card's pages as a recipe for you to type up in the studio, and `photo`
 makes nothing. Every AI call's cost is logged to `book/sources/ai-log.jsonl`;

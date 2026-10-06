@@ -61,10 +61,20 @@ Run any command from the book's folder or a folder inside it, or pass
 
 ## AI: what it does without a key
 
-Two commands use Google's Gemini models: `ingest` and `photo`. They read the
-key from `GEMINI_API_KEY` in the book's `.env` file (`cookbook init` writes it
-empty; get a key at [Google AI Studio](https://aistudio.google.com/apikey)). A
-key already set in your shell wins. Git never commits `.env`.
+Two commands use AI: `ingest` and `photo`. They read a key from the book's
+`.env` file, which `cookbook init` writes with both lines empty:
+
+- `GEMINI_API_KEY`: a key from [Google AI Studio](https://aistudio.google.com/apikey),
+  for Google's Gemini API.
+- `OPENROUTER_API_KEY`: a key from [OpenRouter](https://openrouter.ai/keys). It
+  reaches the same Gemini models (`gemini-3.8-flash` becomes
+  `google/gemini-3.8-flash`), paid from prepaid credits. `--model` and
+  `--image-model` also take any OpenRouter model id, such as `vendor/model`;
+  the prompts were written and checked against Gemini, so check another
+  model's work closely. OpenRouter does not read HEIC photos: save them as JPEG.
+
+With both keys, Gemini is used. A key already set in your shell wins over
+`.env`. Git never commits `.env`.
 
 With no key, both commands say so and carry on without AI:
 
@@ -98,7 +108,7 @@ our-cookbook/
   cookbook                             the launcher install.sh writes
   .venv/                               the engine, installed; not committed
   index.md                             written by cookbook index
-  .env                                 your GEMINI_API_KEY; not committed
+  .env                                 your AI key; not committed
   .gitignore
   .agents/skills/                      guides for AI coding assistants (cookbook agent-files)
   .claude/skills, .github/skills       links to .agents/skills
@@ -123,7 +133,7 @@ newer and Ghostscript (`sudo apt install ghostscript` or
 mkdir our-cookbook && cd our-cookbook
 python3 -m venv .venv
 . .venv/bin/activate
-pip install "git+https://github.com/scanady/family-cookbook@v1.1.0"
+pip install "git+https://github.com/scanady/family-cookbook@v1.2.0"
 python -m playwright install chromium
 cookbook init --title "Our Family Cookbook" --subtitle "The Smith Family"
 cookbook doctor
